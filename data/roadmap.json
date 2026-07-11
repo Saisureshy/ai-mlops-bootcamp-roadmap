@@ -1,23 +1,199 @@
 {
   "academy": {
-    "name": "Enterprise AI & MLOps Academy",
-    "student": "Sai",
-    "totalLearningDays": 200
+    "title": "Enterprise AI & MLOps Bootcamp",
+    "description": "A comprehensive 200-day learning journey specifically designed for Senior Azure DevOps Engineers transitioning to Production AI & MLOps roles. This curriculum prioritizes practical, enterprise-ready skills starting with Python fundamentals, progressing through ML/DL, and culminating in real-world AI platform architecture and deployment.",
+    "version": "3.0.0",
+    "totalLearningDays": 200,
+    "estimatedTotalHours": 1400,
+    "studentRole": "Senior Azure DevOps Engineer",
+    "targetRole": "Production AI & MLOps Engineer",
+    "targetRoles": ["Production AI Engineer", "MLOps Engineer", "Azure AI Engineer", "LLMOps Engineer", "Generative AI Engineer", "Agentic AI Engineer", "Enterprise AI Platform Engineer"],
+    "prerequisite": "9+ Years of DevOps/Cloud Engineering (Azure, Terraform, Docker, Kubernetes, GitHub Actions, Monitoring)",
+    "releaseDate": "2026-07-12",
+    "curriculum_philosophy": "Build from concrete Python fundamentals through critical data science concepts, then layer enterprise infrastructure and deployment patterns. Enterprise projects in final 30 days synthesize all learnings into production-ready systems."
   },
   "modules": [
     {
-      "id": 1,
-      "title": "AI Foundations",
-      "duration": 7,
-      "level": "Beginner",
-      "status": "Not Started"
+      "moduleNumber": 1,
+      "name": "Python Fundamentals & Advanced",
+      "totalWeeks": 4,
+      "skills": [
+        "Python 3.11+", "OOP", "Functional Programming", "Decorators", "Generators", "Iterators", "Context Managers",
+        "Exception Handling", "Logging", "Typing", "Dataclasses", "Enums", "Virtual Environments", "Poetry", "uv",
+        "Pip", "Requirements", "Pytest", "Black", "Ruff", "Mypy", "Pre-commit", "Debugging", "Performance Profiling",
+        "Memory Optimization", "Async Programming", "Multiprocessing", "Threading", "File Handling", "JSON", "YAML",
+        "Environment Variables", "Configuration Management", "Packaging"
+      ]
     },
     {
-      "id": 2,
-      "title": "Python Foundations",
-      "duration": 35,
-      "level": "Beginner",
-      "status": "Locked"
+      "moduleNumber": 2,
+      "name": "SQL & Database Fundamentals",
+      "totalWeeks": 3,
+      "skills": [
+        "SQL", "Advanced SQL", "Window Functions", "CTEs", "Indexes", "Execution Plans", "Transactions", "Normalization",
+        "Data Warehouse", "Star Schema", "Snowflake Schema", "Azure SQL", "Cosmos DB", "PostgreSQL", "MongoDB",
+        "Redis", "DuckDB", "Delta Lake", "Microsoft Fabric Basics"
+      ]
+    },
+    {
+      "moduleNumber": 3,
+      "name": "Data Engineering",
+      "totalWeeks": 3,
+      "skills": [
+        "ETL", "ELT", "Data Lake", "Data Warehouse", "Feature Store", "Data Quality", "Data Validation", "Data Pipelines",
+        "PySpark", "Spark SQL", "Azure Data Factory", "Data Versioning"
+      ]
+    },
+    {
+      "moduleNumber": 4,
+      "name": "Data Science",
+      "totalWeeks": 3,
+      "skills": [
+        "NumPy", "Pandas", "Polars", "Matplotlib", "Seaborn", "EDA", "Feature Engineering", "Feature Selection",
+        "Data Cleaning", "Missing Values", "Outliers", "Statistics", "Probability"
+      ]
+    },
+    {
+      "moduleNumber": 5,
+      "name": "Machine Learning",
+      "totalWeeks": 4,
+      "skills": [
+        "Scikit-learn", "Regression", "Classification", "Clustering", "Decision Trees", "Random Forest", "SVM",
+        "Naive Bayes", "KNN", "Ensemble Methods", "Cross Validation", "Hyperparameter Tuning", "Grid Search",
+        "Random Search", "Model Evaluation", "ROC", "Precision", "Recall", "F1 Score", "Confusion Matrix",
+        "Explainability", "SHAP", "LIME"
+      ]
+    },
+    {
+      "moduleNumber": 6,
+      "name": "Deep Learning",
+      "totalWeeks": 4,
+      "skills": [
+        "Neural Networks", "TensorFlow", "PyTorch", "CNN", "RNN", "LSTM", "GRU", "Attention", "Transformers",
+        "Transfer Learning", "Fine Tuning", "HuggingFace"
+      ]
+    },
+    {
+      "moduleNumber": 7,
+      "name": "FastAPI",
+      "totalWeeks": 2,
+      "skills": [
+        "REST APIs", "CRUD APIs", "Dependency Injection", "Authentication", "JWT", "OAuth", "Async APIs",
+        "Middleware", "Background Tasks", "OpenAPI", "Swagger", "Validation", "Pydantic", "Health Checks"
+      ]
+    },
+    {
+      "moduleNumber": 8,
+      "name": "Docker",
+      "totalWeeks": 2,
+      "skills": [
+        "Images", "Containers", "Volumes", "Networks", "Docker Compose", "Multi-stage Builds", "Optimization",
+        "Security", "Distroless Images"
+      ]
+    },
+    {
+      "moduleNumber": 9,
+      "name": "Kubernetes",
+      "totalWeeks": 3,
+      "skills": [
+        "Pods", "ReplicaSets", "Deployments", "Services", "Ingress", "Namespaces", "Secrets", "ConfigMaps",
+        "Persistent Volumes", "HPA", "KEDA", "Helm", "AKS", "Rolling Updates", "Blue-Green", "Canary"
+      ]
+    },
+    {
+      "moduleNumber": 10,
+      "name": "Terraform",
+      "totalWeeks": 2,
+      "skills": [
+        "Terraform Basics", "Variables", "Outputs", "Modules", "Remote State", "AzureRM", "Workspaces",
+        "Lifecycle", "Provisioners", "AKS", "Azure AI Resources", "Key Vault", "Managed Identity"
+      ]
+    },
+    {
+      "moduleNumber": 11,
+      "name": "Azure AI",
+      "totalWeeks": 3,
+      "skills": [
+        "Azure AI Studio", "Azure AI Foundry", "Azure OpenAI", "Azure AI Search", "Azure ML", "Azure AI Vision",
+        "Azure AI Speech", "Azure AI Document Intelligence", "Azure Content Safety", "Prompt Flow", "Azure AI Agents"
+      ]
+    },
+    {
+      "moduleNumber": 12,
+      "name": "Azure ML & MLflow",
+      "totalWeeks": 2,
+      "skills": [
+        "Workspace", "Compute", "Experiments", "Pipelines", "Jobs", "Endpoints", "Model Registry", "Deployment",
+        "Monitoring", "MLflow Tracking", "Experiments", "Artifacts", "Registry", "Deployment", "Serving"
+      ]
+    },
+    {
+      "moduleNumber": 13,
+      "name": "Generative AI & RAG",
+      "totalWeeks": 3,
+      "skills": [
+        "LLMs", "Tokens", "Context Window", "Temperature", "Top P", "Prompt Engineering", "Few-shot", "Chain of Thought",
+        "Structured Output", "Function Calling", "Tool Calling", "JSON Mode", "Evaluation", "Guardrails",
+        "Embeddings", "Chunking", "Metadata", "Hybrid Search", "Reranking", "Semantic Search", "Azure AI Search",
+        "Vector Search", "Evaluation"
+      ]
+    },
+    {
+      "moduleNumber": 14,
+      "name": "Vector Databases & Frameworks",
+      "totalWeeks": 3,
+      "skills": [
+        "pgvector", "ChromaDB", "Qdrant", "Weaviate", "Milvus", "Pinecone", "FAISS",
+        "LangChain", "Semantic Kernel", "LangGraph", "MCP", "Agentic AI"
+      ]
+    },
+    {
+      "moduleNumber": 15,
+      "name": "AI Security & LLMOps",
+      "totalWeeks": 3,
+      "skills": [
+        "Prompt Injection", "Jailbreak Prevention", "Secrets Management", "RBAC", "Managed Identity", "Key Vault",
+        "OWASP Top 10 for LLMs", "Responsible AI",
+        "Prompt Versioning", "Model Versioning", "Evaluation", "Latency Monitoring", "Cost Optimization",
+        "A/B Testing", "Canary Deployment", "Shadow Deployment", "Model Drift", "Data Drift", "Retraining"
+      ]
+    },
+    {
+      "moduleNumber": 16,
+      "name": "Monitoring & Enterprise AI Architecture",
+      "totalWeeks": 3,
+      "skills": [
+        "Prometheus", "Grafana", "Azure Monitor", "Application Insights", "OpenTelemetry", "Log Analytics",
+        "Alerting", "Tracing", "Metrics", "Dashboards",
+        "Microservices", "FastAPI", "Event Driven Architecture", "Azure Service Bus", "Azure Event Hub",
+        "Azure Functions", "Azure App Service", "Azure API Management", "Caching", "Scalability",
+        "High Availability", "Disaster Recovery", "Cost Optimization"
+      ]
+    },
+        {
+      "moduleNumber": 17,
+      "name": "Enterprise Projects",
+      "totalWeeks": 4,
+      "skills": [
+        "AI Chatbot", "Enterprise RAG", "Azure OpenAI Application", "Customer Support AI",
+        "Document Intelligence", "Invoice Processing", "Recommendation Engine", "Knowledge Search",
+        "ML Pipeline", "Azure ML Pipeline", "MLflow Pipeline", "FastAPI Application",
+        "Docker Deployment", "AKS Deployment", "Terraform Infrastructure", "GitHub Actions CI/CD",
+        "Prometheus", "Grafana", "Enterprise AI Platform"
+      ]
+    },
+    {
+      "moduleNumber": 18,
+      "name": "Interview Preparation",
+      "totalWeeks": 2,
+      "skills": [
+        "Python Interview", "SQL Interview", "Machine Learning Interview", "Deep Learning Interview",
+        "Azure AI Interview", "FastAPI Interview", "Docker Interview", "Kubernetes Interview",
+        "Terraform Interview", "GitHub Actions Interview", "MLOps Interview", "LLMOps Interview",
+        "Agentic AI Interview", "System Design", "Behavioral Questions",
+        "Resume Review", "GitHub Portfolio Review"
+      ]
     }
   ]
 }
+

@@ -1,238 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="description" content="Enterprise AI & MLOps Academy - Personal Learning Tracker">
+    <meta name="theme-color" content="#001a33">
     <title>Enterprise AI & MLOps Academy</title>
-
     <link rel="stylesheet" href="css/style.css">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 </head>
-
 <body>
-
-    <!-- ===========================
-         Sidebar
-    ============================ -->
-
-    <aside class="sidebar">
-
-        <div class="logo">
-
-            <h2>🚀 AI & MLOps</h2>
-
-            <p>Enterprise Academy</p>
-
-        </div>
-
-        <div class="student-card">
-
-            <h3>Sai</h3>
-
-            <span>Senior Azure DevOps Engineer</span>
-
-        </div>
-
-        <nav>
-
-            <ul>
-
-                <li class="active">🏠 Dashboard</li>
-
-                <li>📚 Curriculum</li>
-
-                <li>🎯 Modules</li>
-
-                <li>📖 Learning Days</li>
-
-                <li>🏢 Enterprise Sprint</li>
-
-                <li>🧪 Hands-on Labs</li>
-
-                <li>💻 GitHub Tasks</li>
-
-                <li>🏆 Achievements</li>
-
-                <li>⚙ Settings</li>
-
-            </ul>
-
-        </nav>
-
-    </aside>
-
-    <!-- ===========================
-         Main Content
-    ============================ -->
-
-    <main class="main">
-
-        <!-- Header -->
-
-        <header class="header">
-
-            <div>
-
-                <h1>Enterprise AI & MLOps Academy</h1>
-
-                <p>
-                    Become a Production AI & MLOps Engineer in 200 Learning Days
-                </p>
-
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">Enterprise AI & MLOps Academy</h1>
+                    <p class="app-subtitle">Personal Learning Tracker</p>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="student-name-display" class="student-name">Welcome</span>
+                        <span id="target-role-display" class="target-role">Senior Azure DevOps Engineer</span>
+                    </div>
+                </div>
             </div>
-
         </header>
 
-        <!-- Dashboard -->
+        <!-- MAIN NAVIGATION -->
+        <nav class="main-navigation">
+            <ul class="nav-list">
+                <li><button class="nav-btn active" data-section="dashboard">Dashboard</button></li>
+                <li><button class="nav-btn" data-section="roadmap">Roadmap</button></li>
+                <li><button class="nav-btn" data-section="progress">Progress</button></li>
+                <li><button class="nav-btn" data-section="achievements">Achievements</button></li>
+                <li><button class="nav-btn" data-section="statistics">Statistics</button></li>
+                <li><button class="nav-btn" data-section="settings">Settings</button></li>
+            </ul>
+        </nav>
 
-        <section class="dashboard">
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
 
-            <div class="card">
-
-                <h3>🎯 Target Role</h3>
-
-                <h2>AI & MLOps Engineer</h2>
-
-            </div>
-
-            <div class="card">
-
-                <h3>📅 Learning Day</h3>
-
-                <h2 id="learningDay">
-
-                    0 / 200
-
-                </h2>
-
-            </div>
-
-            <div class="card">
-
-                <h3>📈 Progress</h3>
-
-                <h2 id="progressPercentage">
-
-                    0%
-
-                </h2>
-
-            </div>
-
-            <div class="card">
-
-                <h3>🏢 Current Sprint</h3>
-
-                <h2 id="currentSprint">
-
-                    Sprint 0
-
-                </h2>
-
-            </div>
-
-        </section>
-
-        <!-- Progress -->
-
-        <section class="progress-section">
-
-            <div class="progress-card">
-
-                <div class="progress-bar">
-
-                    <div id="progressFill"></div>
-
+            <!-- ======================= DASHBOARD SECTION ======================= -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2>Dashboard</h2>
+                    <p class="section-description">Your learning overview at a glance</p>
                 </div>
 
-                <p id="progressText">
-
-                    0 of 200 Learning Days Completed
-
-                </p>
-
-            </div>
-
-        </section>
-
-        <!-- Main Layout -->
-
-        <section class="content">
-
-            <!-- Left -->
-
-            <div class="left-panel">
-
-                <div class="panel">
-
-                    <h2>📚 Modules</h2>
-
-                    <div id="moduleContainer">
-
-                        <!-- Dynamic -->
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Right -->
-
-            <div class="right-panel">
-
-                <div class="panel">
-
-                    <h2>📖 Lesson Viewer</h2>
-
-                    <div id="lessonViewer">
-
-                        <div class="welcome">
-
-                            <h2>
-
-                                👋 Welcome Sai
-
-                            </h2>
-
-                            <p>
-
-                                This academy will guide you from Azure DevOps Engineer to a Production AI & MLOps Engineer.
-
-                            </p>
-
-                            <br>
-
-                            <p>
-
-                                👈 Select a Module from the left panel to begin your journey.
-
-                            </p>
-
+                <div class="dashboard-container">
+                    <!-- Key Metrics Grid -->
+                    <div class="metrics-grid">
+                        <!-- Current Module Card -->
+                        <div class="metric-card">
+                            <div class="metric-label">Current Module</div>
+                            <div class="metric-value" id="dashboard-current-module">Module 1</div>
+                            <div class="metric-subtext">Foundations</div>
                         </div>
 
+                        <!-- Current Week Card -->
+                        <div class="metric-card">
+                            <div class="metric-label">Current Week</div>
+                            <div class="metric-value" id="dashboard-current-week">Week 1</div>
+                            <div class="metric-subtext">of the module</div>
+                        </div>
+
+                        <!-- Current Learning Day Card -->
+                        <div class="metric-card">
+                            <div class="metric-label">Current Learning Day</div>
+                            <div class="metric-value" id="dashboard-current-day">Day 1</div>
+                            <div class="metric-subtext">of 200</div>
+                        </div>
+
+                        <!-- Target Role Card -->
+                        <div class="metric-card">
+                            <div class="metric-label">Target Role</div>
+                            <div class="metric-value" id="dashboard-target-role">Production Engineer</div>
+                            <div class="metric-subtext">AI & MLOps</div>
+                        </div>
                     </div>
 
+                    <!-- Progress Overview -->
+                    <div class="progress-overview">
+                        <div class="progress-header">
+                            <h3>Overall Progress</h3>
+                            <span class="progress-percentage" id="dashboard-progress-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="dashboard-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-details">
+                            <div class="progress-detail-item">
+                                <span class="detail-label">Completed Days:</span>
+                                <span class="detail-value" id="dashboard-completed-days">0</span>
+                            </div>
+                            <div class="progress-detail-item">
+                                <span class="detail-label">Remaining Days:</span>
+                                <span class="detail-value" id="dashboard-remaining-days">200</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Streak Information -->
+                    <div class="streak-container">
+                        <div class="streak-card">
+                            <h4>Current Streak</h4>
+                            <div class="streak-value" id="dashboard-current-streak">0</div>
+                            <div class="streak-label">consecutive days</div>
+                        </div>
+                        <div class="streak-card">
+                            <h4>Longest Streak</h4>
+                            <div class="streak-value" id="dashboard-longest-streak">0</div>
+                            <div class="streak-label">consecutive days</div>
+                        </div>
+                    </div>
+
+                    <!-- Estimated Completion -->
+                    <div class="completion-card">
+                        <h3>Estimated Completion</h3>
+                        <div class="completion-date" id="dashboard-completion-date">Not started</div>
+                        <p class="completion-note">Based on current progress rate</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================= ROADMAP SECTION ======================= -->
+            <section id="roadmap" class="section">
+                <div class="section-header">
+                    <h2>Roadmap</h2>
+                    <p class="section-description">Your 200-day learning journey</p>
                 </div>
 
-            </div>
+                <div class="roadmap-container">
+                    <div class="roadmap-controls">
+                        <button id="expand-all-btn" class="control-btn">Expand All</button>
+                        <button id="collapse-all-btn" class="control-btn">Collapse All</button>
+                        <div class="search-box">
+                            <input 
+                                type="text" 
+                                id="roadmap-search" 
+                                class="search-input" 
+                                placeholder="Search learning days..."
+                            >
+                        </div>
+                    </div>
 
-        </section>
+                    <div class="roadmap-content" id="roadmap-content">
+                        <!-- Modules will be loaded dynamically here -->
+                    </div>
+                </div>
+            </section>
 
-    </main>
+            <!-- ======================= PROGRESS SECTION ======================= -->
+            <section id="progress" class="section">
+                <div class="section-header">
+                    <h2>Progress</h2>
+                    <p class="section-description">Track your learning journey</p>
+                </div>
 
+                <div class="progress-container">
+                    <div class="progress-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Total Completed</div>
+                                <div class="stat-value" id="progress-total-completed">0 days</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Remaining</div>
+                                <div class="stat-value" id="progress-remaining">200 days</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Overall Progress</div>
+                                <div class="stat-value" id="progress-percentage">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">⏱️</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Estimated Hours Completed</div>
+                                <div class="stat-value" id="progress-hours-completed">0 hrs</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-chart-container">
+                        <h3>Progress Chart</h3>
+                        <canvas id="progress-chart"></canvas>
+                        <p class="chart-note">Visual representation of your learning progress</p>
+                    </div>
+
+                    <div class="current-focus">
+                        <h3>Current Focus</h3>
+                        <div class="focus-item">
+                            <div class="focus-label">Module:</div>
+                            <div class="focus-value" id="progress-current-module">Not started</div>
+                        </div>
+                        <div class="focus-item">
+                            <div class="focus-label">Week:</div>
+                            <div class="focus-value" id="progress-current-week">Not started</div>
+                        </div>
+                        <div class="focus-item">
+                            <div class="focus-label">Learning Day:</div>
+                            <div class="focus-value" id="progress-current-day">Day 1 of 200</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================= ACHIEVEMENTS SECTION ======================= -->
+            <section id="achievements" class="section">
+                <div class="section-header">
+                    <h2>Achievements</h2>
+                    <p class="section-description">Unlock badges as you progress</p>
+                </div>
+
+                <div class="achievements-container">
+                    <div class="achievements-grid" id="achievements-grid">
+                        <!-- Badges will be loaded dynamically here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================= STATISTICS SECTION ======================= -->
+            <section id="statistics" class="section">
+                <div class="section-header">
+                    <h2>Statistics</h2>
+                    <p class="section-description">In-depth learning analytics</p>
+                </div>
+
+                <div class="statistics-container">
+                    <div class="stats-overview">
+                        <div class="stat-box">
+                            <div class="stat-box-label">Completed</div>
+                            <div class="stat-box-value" id="stats-completed">0</div>
+                            <div class="stat-box-unit">days</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-box-label">Remaining</div>
+                            <div class="stat-box-value" id="stats-remaining">200</div>
+                            <div class="stat-box-unit">days</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-box-label">Progress</div>
+                            <div class="stat-box-value" id="stats-progress">0</div>
+                            <div class="stat-box-unit">%</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-box-label">Badges Earned</div>
+                            <div class="stat-box-value" id="stats-badges">0</div>
+                            <div class="stat-box-unit">of 8</div>
+                        </div>
+                    </div>
+
+                    <div class="detailed-stats">
+                        <div class="stat-section">
+                            <h3>By Module</h3>
+                            <div class="module-stats" id="module-stats">
+                                <!-- Module statistics will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="stat-section">
+                            <h3>Learning Insights</h3>
+                            <ul class="insights-list" id="insights-list">
+                                <li>Start completing learning days to see insights</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================= SETTINGS SECTION ======================= -->
+            <section id="settings" class="section">
+                <div class="section-header">
+                    <h2>Settings</h2>
+                    <p class="section-description">Customize your learning experience</p>
+                </div>
+
+                <div class="settings-container">
+                    <!-- Profile Settings -->
+                    <div class="settings-section">
+                        <h3>Profile Settings</h3>
+                        <form id="profile-form" class="settings-form">
+                            <div class="form-group">
+                                <label for="settings-student-name">Student Name</label>
+                                <input 
+                                    type="text" 
+                                    id="settings-student-name" 
+                                    class="form-input"
+                                    placeholder="Enter your name"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-target-role">Target Role</label>
+                                <input 
+                                    type="text" 
+                                    id="settings-target-role" 
+                                    class="form-input"
+                                    placeholder="e.g., Production AI & MLOps Engineer"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-github">GitHub Profile</label>
+                                <input 
+                                    type="url" 
+                                    id="settings-github" 
+                                    class="form-input"
+                                    placeholder="https://github.com/username"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-linkedin">LinkedIn Profile</label>
+                                <input 
+                                    type="url" 
+                                    id="settings-linkedin" 
+                                    class="form-input"
+                                    placeholder="https://linkedin.com/in/username"
+                                >
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                        </form>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="settings-section">
+                        <h3>Data Management</h3>
+                        <div class="data-management">
+                            <div class="data-action">
+                                <h4>Export Progress</h4>
+                                <p>Download your learning progress as a JSON file</p>
+                                <button id="export-btn" class="btn btn-secondary">Export Progress</button>
+                            </div>
+
+                            <div class="data-action">
+                                <h4>Import Progress</h4>
+                                <p>Restore your progress from a previously exported file</p>
+                                <input 
+                                    type="file" 
+                                    id="import-file" 
+                                    class="file-input" 
+                                    accept=".json"
+                                    style="display: none;"
+                                >
+                                <button id="import-btn" class="btn btn-secondary">Import Progress</button>
+                            </div>
+
+                            <div class="data-action danger">
+                                <h4>Reset Progress</h4>
+                                <p>Clear all learning data and start over (this cannot be undone)</p>
+                                <button id="reset-btn" class="btn btn-danger">Reset All Progress</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Information -->
+                    <div class="settings-section">
+                        <h3>About</h3>
+                        <div class="about-info">
+                            <p><strong>Application:</strong> Enterprise AI & MLOps Academy</p>
+                            <p><strong>Version:</strong> 1.0.0</p>
+                            <p><strong>Total Learning Days:</strong> 200</p>
+                            <p><strong>Storage:</strong> Local Storage (Browser)</p>
+                            <p><strong>Last Updated:</strong> <span id="last-updated">Never</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>&copy; 2024 Enterprise AI & MLOps Academy. All rights reserved.</p>
+            <p>A personal learning journey powered by deliberate practice.</p>
+        </footer>
+    </div>
+
+    <!-- SCRIPTS -->
     <script src="js/app.js"></script>
-
 </body>
-
 </html>

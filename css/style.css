@@ -392,5 +392,60 @@ grid-template-columns:1fr;
 padding:20px;
 
 }
+.module-card{
 
+    background:#162234;
+
+    border:1px solid #334155;
+
+    border-radius:12px;
+
+    padding:20px;
+
+    margin-bottom:18px;
+
+    transition:.3s;
+
+}
+
+.module-card:hover{
+
+    transform:translateY(-4px);
+
+    border-color:#3b82f6;
+
+}
+
+.module-card h3{
+
+    color:#38bdf8;
+
+    margin-bottom:10px;
+
+}
+
+.module-card h2{
+
+    margin-bottom:12px;
+
+    font-size:22px;
+
+}
+
+.module-card p{
+
+    margin-bottom:8px;
+
+    color:#cbd5e1;
+
+}
+
+.module-card button{
+
+    margin-top:15px;
+
+    width:100%;
+
+}
+   
 }

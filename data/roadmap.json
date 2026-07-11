@@ -1,175 +1,23 @@
 {
   "academy": {
     "name": "Enterprise AI & MLOps Academy",
-    "version": "1.0.0",
     "student": "Sai",
-    "mentor": "ChatGPT",
-    "targetRole": "Production AI & MLOps Engineer",
-    "totalLearningDays": 200,
-    "currentLearningDay": 1
+    "totalLearningDays": 200
   },
-
   "modules": [
-
     {
       "id": 1,
       "title": "AI Foundations",
-      "weeks": 1,
-      "learningDays": 7,
-      "startDay": 1,
-      "endDay": 7,
-      "file": "phase01.json"
+      "duration": 7,
+      "level": "Beginner",
+      "status": "Not Started"
     },
-
     {
       "id": 2,
       "title": "Python Foundations",
-      "weeks": 6,
-      "learningDays": 42,
-      "startDay": 8,
-      "endDay": 49,
-      "file": "phase02.json"
-    },
-
-    {
-      "id": 3,
-      "title": "SQL for AI Engineers",
-      "weeks": 2,
-      "learningDays": 14,
-      "startDay": 50,
-      "endDay": 63,
-      "file": "phase03.json"
-    },
-
-    {
-      "id": 4,
-      "title": "Git & GitHub",
-      "weeks": 1,
-      "learningDays": 7,
-      "startDay": 64,
-      "endDay": 70,
-      "file": "phase04.json"
-    },
-
-    {
-      "id": 5,
-      "title": "Data Science Foundations",
-      "weeks": 3,
-      "learningDays": 21,
-      "startDay": 71,
-      "endDay": 91,
-      "file": "phase05.json"
-    },
-
-    {
-      "id": 6,
-      "title": "Machine Learning",
-      "weeks": 5,
-      "learningDays": 35,
-      "startDay": 92,
-      "endDay": 126,
-      "file": "phase06.json"
-    },
-
-    {
-      "id": 7,
-      "title": "FastAPI",
-      "weeks": 2,
-      "learningDays": 14,
-      "startDay": 127,
-      "endDay": 140,
-      "file": "phase07.json"
-    },
-
-    {
-      "id": 8,
-      "title": "Docker",
-      "weeks": 1,
-      "learningDays": 7,
-      "startDay": 141,
-      "endDay": 147,
-      "file": "phase08.json"
-    },
-
-    {
-      "id": 9,
-      "title": "Kubernetes",
-      "weeks": 3,
-      "learningDays": 21,
-      "startDay": 148,
-      "endDay": 168,
-      "file": "phase09.json"
-    },
-
-    {
-      "id": 10,
-      "title": "GitHub Actions",
-      "weeks": 2,
-      "learningDays": 14,
-      "startDay": 169,
-      "endDay": 182,
-      "file": "phase10.json"
-    },
-
-    {
-      "id": 11,
-      "title": "Terraform",
-      "weeks": 2,
-      "learningDays": 14,
-      "startDay": 183,
-      "endDay": 196,
-      "file": "phase11.json"
-    },
-
-    {
-      "id": 12,
-      "title": "Azure AI Platform",
-      "weeks": 2,
-      "learningDays": 14,
-      "startDay": 197,
-      "endDay": 210,
-      "file": "phase12.json"
-    },
-
-    {
-      "id": 13,
-      "title": "Generative AI",
-      "weeks": 3,
-      "learningDays": 21,
-      "startDay": 211,
-      "endDay": 231,
-      "file": "phase13.json"
-    },
-
-    {
-      "id": 14,
-      "title": "Agentic AI",
-      "weeks": 3,
-      "learningDays": 21,
-      "startDay": 232,
-      "endDay": 252,
-      "file": "phase14.json"
-    },
-
-    {
-      "id": 15,
-      "title": "MLOps",
-      "weeks": 4,
-      "learningDays": 28,
-      "startDay": 253,
-      "endDay": 280,
-      "file": "phase15.json"
-    },
-
-    {
-      "id": 16,
-      "title": "Enterprise AI Platform Capstone",
-      "weeks": 5,
-      "learningDays": 35,
-      "startDay": 281,
-      "endDay": 315,
-      "file": "phase16.json"
+      "duration": 35,
+      "level": "Beginner",
+      "status": "Locked"
     }
-
   ]
 }

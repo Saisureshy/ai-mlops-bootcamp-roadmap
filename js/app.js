@@ -1,159 +1,119 @@
-/* ==========================================
-   Enterprise AI & MLOps Bootcamp Portal
-   Version 1.0
-========================================== */
+const roadmapFile = "data/roadmap.json";
 
-const TOTAL_DAYS = 200;
-
-// ----------------------------
-// Local Storage
-// ----------------------------
+let roadmap = null;
 
 let completedDays =
     JSON.parse(localStorage.getItem("completedDays")) || [];
 
-// ----------------------------
-// Load Roadmap
-// ----------------------------
+async function initializePortal() {
 
-async function loadRoadmap() {
+    await loadRoadmap();
 
-    try {
+    loadDashboard();
 
-        const response = await fetch("data/roadmap.json");
-
-        const data = await response.json();
-
-        createCurriculum(data.phases);
-
-        updateProgress();
-
-    }
-
-    catch (error) {
-
-        console.error("Unable to load roadmap.json");
-
-        console.error(error);
-
-    }
+    renderModules();
 
 }
 
-// ----------------------------
-// Create Curriculum
-// ----------------------------
+async function loadRoadmap() {
 
-function createCurriculum(phases) {
+    const response = await fetch(roadmapFile);
 
-    const container = document.getElementById("phaseContainer");
+    roadmap = await response.json();
+
+}
+
+function loadDashboard() {
+
+    document.getElementById("learningDay").innerText =
+        completedDays.length + " / " +
+        roadmap.academy.totalLearningDays;
+
+    const percentage =
+        (completedDays.length /
+            roadmap.academy.totalLearningDays) * 100;
+
+    document.getElementById("progressPercentage").innerText =
+        percentage.toFixed(0) + "%";
+
+    document.getElementById("progressFill").style.width =
+        percentage + "%";
+
+    document.getElementById("progressText").innerText =
+        completedDays.length +
+        " of " +
+        roadmap.academy.totalLearningDays +
+        " Learning Days Completed";
+
+}
+
+function renderModules() {
+
+    const container =
+        document.getElementById("moduleContainer");
 
     container.innerHTML = "";
 
-    phases.forEach((phase) => {
+    roadmap.modules.forEach(module => {
 
-        const phaseCard = document.createElement("div");
+        const card =
+            document.createElement("div");
 
-        phaseCard.className = "phase-card";
+        card.className = "module-card";
 
-        phaseCard.innerHTML = `
+        card.innerHTML = `
 
-            <h2>${phase.title}</h2>
+            <h3>📦 Module ${module.id}</h3>
 
-            <p>
+            <h2>${module.title}</h2>
 
-                <strong>Duration:</strong>
+            <p><strong>Duration:</strong> ${module.duration} Learning Days</p>
 
-                ${phase.weeks} Weeks
+            <p><strong>Level:</strong> ${module.level}</p>
 
-            </p>
+            <p><strong>Status:</strong> ${module.status}</p>
 
-            <p>
+            <button onclick="openModule(${module.id})">
 
-                ${phase.description}
-
-            </p>
-
-            <br>
-
-            <button onclick="showMessage('${phase.title}')">
-
-                View Curriculum
+                Open Module
 
             </button>
 
         `;
 
-        container.appendChild(phaseCard);
+        container.appendChild(card);
 
     });
 
 }
 
-// ----------------------------
-// Progress
-// ----------------------------
+function openModule(id){
 
-function updateProgress() {
+    const lesson =
+        document.getElementById("lessonViewer");
 
-    const progress = document.getElementById("progressFill");
+    lesson.innerHTML = `
 
-    const progressText = document.getElementById("progressText");
+        <h2>📚 Module ${id}</h2>
 
-    const percentage =
+        <br>
 
-        (completedDays.length / TOTAL_DAYS) * 100;
+        <p>
 
-    progress.style.width = percentage + "%";
+        Learning Days for this module will appear here.
 
-    progressText.innerHTML =
+        </p>
 
-        `${completedDays.length} / ${TOTAL_DAYS} Days Completed`;
+        <br>
 
-}
+        <p>
 
-// ----------------------------
-// Temporary Button
-// ----------------------------
+        (Next Commit)
 
-function showMessage(name) {
+        </p>
 
-    alert(
-
-        "Phase Selected:\\n\\n"
-
-        + name
-
-        + "\\n\\n(Detailed curriculum coming next.)"
-
-    );
+    `;
 
 }
 
-// ----------------------------
-// Future Function
-// ----------------------------
-
-// Later we will create
-
-// Week View
-
-// Day View
-
-// Check Mark
-
-// Notes
-
-// Assignments
-
-// Interview Questions
-
-// Progress Analytics
-
-// Search
-
-// Dashboard
-
-// ----------------------------
-
-loadRoadmap();
+initializePortal();

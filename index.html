@@ -7,11 +7,9 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Enterprise AI & MLOps Bootcamp</title>
+    <title>Enterprise AI & MLOps Academy</title>
 
     <link rel="stylesheet" href="css/style.css">
-
-    <script defer src="js/app.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
@@ -23,7 +21,9 @@
 
 <body>
 
-    <!-- Sidebar -->
+    <!-- ===========================
+         Sidebar
+    ============================ -->
 
     <aside class="sidebar">
 
@@ -31,7 +31,15 @@
 
             <h2>🚀 AI & MLOps</h2>
 
-            <span>Enterprise Bootcamp</span>
+            <p>Enterprise Academy</p>
+
+        </div>
+
+        <div class="student-card">
+
+            <h3>Sai</h3>
+
+            <span>Senior Azure DevOps Engineer</span>
 
         </div>
 
@@ -43,17 +51,17 @@
 
                 <li>📚 Curriculum</li>
 
-                <li>📅 Roadmap</li>
+                <li>🎯 Modules</li>
 
-                <li>📝 Daily Notes</li>
-
-                <li>🧪 Hands-on Labs</li>
+                <li>📖 Learning Days</li>
 
                 <li>🏢 Enterprise Sprint</li>
 
-                <li>📂 GitHub Tasks</li>
+                <li>🧪 Hands-on Labs</li>
 
-                <li>🏆 Milestones</li>
+                <li>💻 GitHub Tasks</li>
+
+                <li>🏆 Achievements</li>
 
                 <li>⚙ Settings</li>
 
@@ -63,83 +71,83 @@
 
     </aside>
 
+    <!-- ===========================
+         Main Content
+    ============================ -->
 
-
-    <!-- Main Content -->
-
-    <main class="main-content">
+    <main class="main">
 
         <!-- Header -->
 
-        <header class="top-header">
+        <header class="header">
 
             <div>
 
-                <h1>Enterprise AI & MLOps Engineer Bootcamp</h1>
+                <h1>Enterprise AI & MLOps Academy</h1>
 
-                <p>Your Personal Learning Portal</p>
+                <p>
+                    Become a Production AI & MLOps Engineer in 200 Learning Days
+                </p>
 
             </div>
 
         </header>
 
+        <!-- Dashboard -->
 
-
-        <!-- Profile Cards -->
-
-        <section class="cards">
-
-            <div class="card">
-
-                <h3>👤 Student</h3>
-
-                <p id="studentName">Sai</p>
-
-            </div>
-
-
-
-            <div class="card">
-
-                <h3>💼 Current Role</h3>
-
-                <p>Senior Azure DevOps Engineer</p>
-
-            </div>
-
-
+        <section class="dashboard">
 
             <div class="card">
 
                 <h3>🎯 Target Role</h3>
 
-                <p>Production AI & MLOps Engineer</p>
+                <h2>AI & MLOps Engineer</h2>
 
             </div>
 
+            <div class="card">
 
+                <h3>📅 Learning Day</h3>
+
+                <h2 id="learningDay">
+
+                    0 / 200
+
+                </h2>
+
+            </div>
 
             <div class="card">
 
-                <h3>📅 Duration</h3>
+                <h3>📈 Progress</h3>
 
-                <p>200 Days</p>
+                <h2 id="progressPercentage">
+
+                    0%
+
+                </h2>
+
+            </div>
+
+            <div class="card">
+
+                <h3>🏢 Current Sprint</h3>
+
+                <h2 id="currentSprint">
+
+                    Sprint 0
+
+                </h2>
 
             </div>
 
         </section>
 
-
-
-        <!-- Progress Section -->
+        <!-- Progress -->
 
         <section class="progress-section">
 
             <div class="progress-card">
-
-                <h2>Overall Progress</h2>
-
-
 
                 <div class="progress-bar">
 
@@ -147,93 +155,83 @@
 
                 </div>
 
+                <p id="progressText">
 
+                    0 of 200 Learning Days Completed
 
-                <h3 id="progressText">
-
-                    0 / 200 Days Completed
-
-                </h3>
-
-            </div>
-
-
-
-            <div class="progress-card">
-
-                <h2>Current Phase</h2>
-
-                <h3 id="currentPhase">
-
-                    Phase 0
-
-                </h3>
-
-                <p>Bootcamp Planning</p>
-
-            </div>
-
-
-
-            <div class="progress-card">
-
-                <h2>Current Sprint</h2>
-
-                <h3>
-
-                    Sprint 0
-
-                </h3>
-
-                <p>Roadmap Design</p>
+                </p>
 
             </div>
 
         </section>
 
+        <!-- Main Layout -->
 
+        <section class="content">
 
-        <!-- Today's Goal -->
+            <!-- Left -->
 
-        <section class="today-card">
+            <div class="left-panel">
 
-            <h2>🎯 Today's Mission</h2>
+                <div class="panel">
 
+                    <h2>📚 Modules</h2>
 
+                    <div id="moduleContainer">
 
-            <p>
+                        <!-- Dynamic -->
 
-                Complete the Enterprise AI & MLOps Bootcamp Roadmap and prepare the learning portal.
+                    </div>
 
-            </p>
+                </div>
 
-        </section>
+            </div>
 
+            <!-- Right -->
 
+            <div class="right-panel">
 
-        <!-- Phase Container -->
+                <div class="panel">
 
-        <section>
+                    <h2>📖 Lesson Viewer</h2>
 
-            <h2 class="phase-title">
+                    <div id="lessonViewer">
 
-                📚 Curriculum
+                        <div class="welcome">
 
-            </h2>
+                            <h2>
 
+                                👋 Welcome Sai
 
+                            </h2>
 
-            <div id="phaseContainer">
+                            <p>
 
-                <!-- Dynamic Content from roadmap.json -->
+                                This academy will guide you from Azure DevOps Engineer to a Production AI & MLOps Engineer.
+
+                            </p>
+
+                            <br>
+
+                            <p>
+
+                                👈 Select a Module from the left panel to begin your journey.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
 
             </div>
 
         </section>
-
-
 
     </main>
+
+    <script src="js/app.js"></script>
 
 </body>
 

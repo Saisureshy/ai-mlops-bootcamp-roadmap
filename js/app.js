@@ -691,10 +691,51 @@ class RoadmapManager {
         const content = Utils.createElement('div', { className: 'accordion-content' });
         const weekFragment = document.createDocumentFragment();
         
-        module.weeks.forEach((week, weekIndex) => {
-            const weekElement = this.createWeekElement(week, moduleIndex, weekIndex);
-            weekFragment.appendChild(weekElement);
-        });
+        // Check if module has weeks (future structure) or only skills (current structure)
+
+        if (module.weeks && Array.isArray(module.weeks) && module.weeks.length > 0) {
+        
+            // Existing structure (Weeks -> Learning Days)
+            module.weeks.forEach((week, weekIndex) => {
+                const weekElement = this.createWeekElement(week, moduleIndex, weekIndex);
+                weekFragment.appendChild(weekElement);
+            });
+        
+        } else if (module.skills && Array.isArray(module.skills)) {
+        
+            // Current structure (Skills only)
+            const skillsContainer = Utils.createElement('div', {
+                className: 'skills-container'
+            });
+        
+            const skillsTitle = Utils.createElement('h4');
+            skillsTitle.textContent = `Skills (${module.skills.length})`;
+        
+            skillsContainer.appendChild(skillsTitle);
+        
+            const skillsGrid = Utils.createElement('div', {
+                className: 'skills-grid'
+            });
+        
+            module.skills.forEach(skill => {
+        
+                const skillCard = Utils.createElement('div', {
+                    className: 'skill-card'
+                });
+        
+                skillCard.innerHTML = `
+                    <span class="skill-icon">✅</span>
+                    <span class="skill-name">${skill}</span>
+                `;
+        
+                skillsGrid.appendChild(skillCard);
+        
+            });
+        
+            skillsContainer.appendChild(skillsGrid);
+            content.appendChild(skillsContainer);
+        
+        }
         
         content.appendChild(weekFragment);
         
@@ -708,84 +749,68 @@ class RoadmapManager {
         moduleDiv.appendChild(content);
         
         return moduleDiv;
-    }
-
-    /**
-     * Create week element
-     */
-    createWeekElement(week, moduleIndex, weekIndex) {
-        const weekDiv = Utils.createElement('div', { className: 'accordion-week' });
+        }
         
-        // Week header
-        const header = Utils.createElement('button', { className: 'accordion-header' });
-        header.innerHTML = `
-            ${week.name}
-            <span class="accordion-toggle">▼</span>
-        `;
+        /**
+         * Create week element
+         */
+        createWeekElement(week, moduleIndex, weekIndex) {
         
-        // Week content
-        const content = Utils.createElement('div', { className: 'accordion-content' });
-        const dayFragment = document.createDocumentFragment();
+            const weekDiv = Utils.createElement('div', {
+                className: 'accordion-week'
+            });
         
-        week.learningDays.forEach((day) => {
-            const dayElement = this.createLearningDayElement(day);
-            dayFragment.appendChild(dayElement);
-        });
+            const header = Utils.createElement('button', {
+                className: 'accordion-header'
+            });
         
-        content.appendChild(dayFragment);
+            header.innerHTML = `
+                ${week.name}
+                <span class="accordion-toggle">▼</span>
+            `;
         
-        // Toggle functionality
-        header.addEventListener('click', () => {
-            header.classList.toggle('active');
-            content.classList.toggle('active');
-        });
+            const content = Utils.createElement('div', {
+                className: 'accordion-content'
+            });
         
-        weekDiv.appendChild(header);
-        weekDiv.appendChild(content);
+            const dayFragment = document.createDocumentFragment();
         
-        return weekDiv;
-    }
-
-    /**
-     * Create learning day element
-     */
-    createLearningDayElement(day) {
-        const isCompleted = this.state.isDayCompleted(day.number);
-        const isLocked = this.state.isDayLocked(day.number);
+            if (week.learningDays && Array.isArray(week.learningDays)) {
         
-        const dayDiv = Utils.createElement('div', { 
-            className: `learning-day-item ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`
-        });
+                week.learningDays.forEach(day => {
         
-        const checkbox = Utils.createElement('input', {
-            type: 'checkbox',
-            className: 'learning-day-checkbox',
-            checked: isCompleted,
-            disabled: isLocked,
-            dataset: { dayNumber: day.number }
-        });
+                    const dayElement = this.createLearningDayElement(day);
         
-        const info = Utils.createElement('div', { className: 'learning-day-info' });
-        info.innerHTML = `
-            <div class="learning-day-number">Day ${day.number}</div>
-            <div class="learning-day-title">${day.title}</div>
-            <div class="learning-day-time">⏱️ ${day.estimatedHours}h</div>
-        `;
+                    dayFragment.appendChild(dayElement);
         
-        const status = Utils.createElement('div', { className: 'learning-day-status' });
-        status.textContent = isCompleted ? 'Completed' : isLocked ? 'Locked' : 'Ready';
+                });
         
-        dayDiv.appendChild(checkbox);
-        dayDiv.appendChild(info);
-        dayDiv.appendChild(status);
+            } else {
         
-        // Checkbox change event
-        checkbox.addEventListener('change', () => {
-            this.handleDayCheckboxChange(day.number, checkbox.checked);
-        });
+                const emptyMessage = Utils.createElement('div', {
+                    className: 'empty-message'
+                });
         
-        return dayDiv;
-    }
+                emptyMessage.innerHTML = `
+                    <p>No learning days available yet.</p>
+                `;
+        
+                dayFragment.appendChild(emptyMessage);
+        
+            }
+        
+            content.appendChild(dayFragment);
+        
+            header.addEventListener('click', () => {
+                header.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+        
+            weekDiv.appendChild(header);
+            weekDiv.appendChild(content);
+        
+            return weekDiv;
+        }
 
     /**
      * Handle day checkbox change

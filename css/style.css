@@ -814,6 +814,29 @@ a:focus-visible {
     color: var(--color-secondary);
 }
 
+/* Learning Day Expanded Details */
+.day-detail-grid {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.day-detail-grid h4 {
+    margin: var(--spacing-sm) 0 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.day-detail-grid p,
+.day-detail-grid ul {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.day-detail-grid ul {
+    padding-left: var(--spacing-lg);
+}
+
 /* =====================================================
    13. PROGRESS SECTION
    ===================================================== */

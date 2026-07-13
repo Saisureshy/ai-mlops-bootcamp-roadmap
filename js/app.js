@@ -1,295 +1,160 @@
 /**
- * Enterprise AI & MLOps Academy - Personal Learning Tracker
- * Main Application File
- * 
- * Architecture:
- * - Modular class-based design
- * - Single Responsibility Principle
- * - Event-driven state management
- * - Local Storage persistence
- * - Dynamic DOM rendering
+ * Enterprise AI and MLOps Academy - Personal Learning Tracker
+ * Application logic for Phase -> Module -> Week -> Learning Day hierarchy.
  */
 
-// =====================================================
-// CONSTANTS
-// =====================================================
-const TOTAL_LEARNING_DAYS = 200;
+const DEFAULT_TOTAL_LEARNING_DAYS = 200;
+
 const ACHIEVEMENTS = [
-    { day: 7, title: 'AI Explorer', emoji: '🤖', description: 'Completed 7 learning days' },
-    { day: 42, title: 'Python Engineer', emoji: '🐍', description: 'Completed 42 learning days' },
-    { day: 70, title: 'SQL Engineer', emoji: '🗄️', description: 'Completed 70 learning days' },
-    { day: 100, title: 'Machine Learning Engineer', emoji: '🧠', description: 'Completed 100 learning days' },
-    { day: 140, title: 'Docker Engineer', emoji: '🐳', description: 'Completed 140 learning days' },
-    { day: 160, title: 'Kubernetes Engineer', emoji: '☸️', description: 'Completed 160 learning days' },
-    { day: 180, title: 'GenAI Engineer', emoji: '✨', description: 'Completed 180 learning days' },
-    { day: 200, title: 'Enterprise AI & MLOps Engineer', emoji: '🏆', description: 'Completed all 200 learning days' }
+    { day: 7, title: '7-Day Starter', emoji: '🔥', description: 'Completed 7 learning days' },
+    { day: 14, title: '14-Day Builder', emoji: '⚙️', description: 'Completed 14 learning days' },
+    { day: 30, title: '30-Day Consistency', emoji: '📈', description: 'Completed 30 learning days' },
+    { day: 60, title: '60-Day Practitioner', emoji: '🧪', description: 'Completed 60 learning days' },
+    { day: 100, title: '100-Day Engineer', emoji: '🧠', description: 'Completed 100 learning days' },
+    { day: 150, title: '150-Day Architect', emoji: '🏗️', description: 'Completed 150 learning days' },
+    { day: 200, title: 'Bootcamp Complete', emoji: '🏆', description: 'Completed all 200 learning days' }
 ];
 
-// =====================================================
-// UTILITIES
-// =====================================================
-
-/**
- * Utility functions for common operations
- */
 class Utils {
-    /**
-     * Parse JSON safely and return null on error
-     */
-    static parseJSON(jsonString) {
+    static parseJSON(value, fallback = null) {
         try {
-            return JSON.parse(jsonString);
-        } catch (error) {
-            console.error('JSON Parse Error:', error);
-            return null;
+            return JSON.parse(value);
+        } catch {
+            return fallback;
         }
     }
 
-    /**
-     * Format date as readable string
-     */
-    static formatDate(date) {
-        if (!(date instanceof Date)) {
-            date = new Date(date);
-        }
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    }
-
-    /**
-     * Get element safely
-     */
     static getElement(selector) {
         return document.querySelector(selector);
     }
 
-    /**
-     * Get all elements matching selector
-     */
     static getElements(selector) {
         return document.querySelectorAll(selector);
     }
 
-    /**
-     * Create element with optional attributes
-     */
-    static createElement(tag, attributes = {}, text = '') {
+    static createElement(tag, attrs = {}) {
         const element = document.createElement(tag);
-        Object.assign(element, attributes);
-        if (text) element.textContent = text;
+        Object.assign(element, attrs);
         return element;
     }
 
-    /**
-     * Calculate percentage
-     */
     static calculatePercentage(current, total) {
+        if (!total) return 0;
         return Math.round((current / total) * 100);
     }
 
-    /**
-     * Estimate completion date based on completion rate
-     */
-    static estimateCompletionDate(completedDays) {
-        if (completedDays === 0) return 'Not started';
-        const now = new Date();
-        const daysRemaining = TOTAL_LEARNING_DAYS - completedDays;
-        const completionDate = new Date(now.getTime() + daysRemaining * 24 * 60 * 60 * 1000);
-        return this.formatDate(completionDate);
+    static formatDate(date) {
+        const d = date instanceof Date ? date : new Date(date);
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    /**
-     * Calculate streak from completion array
-     */
-    static calculateCurrentStreak(completedDays) {
-        if (completedDays.length === 0) return 0;
-        
-        completedDays.sort((a, b) => a - b);
-        let streak = 1;
-        let currentStreak = 1;
-        
-        for (let i = 1; i < completedDays.length; i++) {
-            if (completedDays[i] === completedDays[i - 1] + 1) {
-                currentStreak++;
-                streak = Math.max(streak, currentStreak);
-            } else {
-                currentStreak = 1;
-            }
-        }
-        
-        return streak;
+    static estimateCompletionDate(completedDays, totalDays) {
+        if (completedDays <= 0) return 'Not started';
+        const remaining = Math.max(totalDays - completedDays, 0);
+        const completion = new Date(Date.now() + remaining * 24 * 60 * 60 * 1000);
+        return this.formatDate(completion);
     }
 
-    /**
-     * Show confirmation dialog
-     */
-    static confirm(message) {
-        return window.confirm(message);
-    }
-
-    /**
-     * Show alert message
-     */
     static alert(message) {
         window.alert(message);
     }
+
+    static confirm(message) {
+        return window.confirm(message);
+    }
 }
 
-// =====================================================
-// STORAGE MANAGER
-// =====================================================
-
-/**
- * Manages Local Storage operations
- * Handles persistence of progress, settings, and achievements
- */
 class StorageManager {
     constructor() {
         this.prefix = 'mlops-academy-';
         this.keys = {
             completedDays: this.prefix + 'completed-days',
-            currentModule: this.prefix + 'current-module',
-            currentWeek: this.prefix + 'current-week',
-            currentDay: this.prefix + 'current-day',
+            position: this.prefix + 'position',
             settings: this.prefix + 'settings',
             achievements: this.prefix + 'achievements',
-            lastUpdated: this.prefix + 'last-updated',
             currentStreak: this.prefix + 'current-streak',
-            longestStreak: this.prefix + 'longest-streak'
+            longestStreak: this.prefix + 'longest-streak',
+            lastUpdated: this.prefix + 'last-updated'
         };
     }
 
-    /**
-     * Check if Local Storage is available
-     */
     isAvailable() {
         try {
-            const test = '__storage-test__';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
+            const key = '__storage_test__';
+            localStorage.setItem(key, key);
+            localStorage.removeItem(key);
             return true;
-        } catch (error) {
-            console.error('Local Storage unavailable:', error);
+        } catch {
             return false;
         }
     }
 
-    /**
-     * Save completed days
-     */
     saveCompletedDays(days) {
-        if (!this.isAvailable()) return false;
+        if (!this.isAvailable()) return;
         localStorage.setItem(this.keys.completedDays, JSON.stringify(days));
         localStorage.setItem(this.keys.lastUpdated, new Date().toISOString());
-        return true;
     }
 
-    /**
-     * Load completed days
-     */
     loadCompletedDays() {
         if (!this.isAvailable()) return [];
-        const data = localStorage.getItem(this.keys.completedDays);
-        return data ? Utils.parseJSON(data) || [] : [];
+        const raw = localStorage.getItem(this.keys.completedDays);
+        const parsed = raw ? Utils.parseJSON(raw, []) : [];
+        return Array.isArray(parsed) ? parsed : [];
     }
 
-    /**
-     * Save current position
-     */
-    savePosition(module, week, day) {
-        if (!this.isAvailable()) return false;
-        localStorage.setItem(this.keys.currentModule, JSON.stringify(module));
-        localStorage.setItem(this.keys.currentWeek, JSON.stringify(week));
-        localStorage.setItem(this.keys.currentDay, JSON.stringify(day));
-        return true;
+    savePosition(position) {
+        if (!this.isAvailable()) return;
+        localStorage.setItem(this.keys.position, JSON.stringify(position));
     }
 
-    /**
-     * Load current position
-     */
     loadPosition() {
         if (!this.isAvailable()) return null;
-        return {
-            module: Utils.parseJSON(localStorage.getItem(this.keys.currentModule)) || null,
-            week: Utils.parseJSON(localStorage.getItem(this.keys.currentWeek)) || null,
-            day: Utils.parseJSON(localStorage.getItem(this.keys.currentDay)) || 1
-        };
+        const raw = localStorage.getItem(this.keys.position);
+        return raw ? Utils.parseJSON(raw, null) : null;
     }
 
-    /**
-     * Save settings
-     */
     saveSettings(settings) {
-        if (!this.isAvailable()) return false;
+        if (!this.isAvailable()) return;
         localStorage.setItem(this.keys.settings, JSON.stringify(settings));
-        return true;
     }
 
-    /**
-     * Load settings
-     */
     loadSettings() {
         if (!this.isAvailable()) return {};
-        const data = localStorage.getItem(this.keys.settings);
-        return data ? Utils.parseJSON(data) || {} : {};
+        const raw = localStorage.getItem(this.keys.settings);
+        return raw ? Utils.parseJSON(raw, {}) : {};
     }
 
-    /**
-     * Save achievements
-     */
     saveAchievements(achievements) {
-        if (!this.isAvailable()) return false;
+        if (!this.isAvailable()) return;
         localStorage.setItem(this.keys.achievements, JSON.stringify(achievements));
-        return true;
     }
 
-    /**
-     * Load achievements
-     */
     loadAchievements() {
         if (!this.isAvailable()) return [];
-        const data = localStorage.getItem(this.keys.achievements);
-        return data ? Utils.parseJSON(data) || [] : [];
+        const raw = localStorage.getItem(this.keys.achievements);
+        const parsed = raw ? Utils.parseJSON(raw, []) : [];
+        return Array.isArray(parsed) ? parsed : [];
     }
 
-    /**
-     * Save streak information
-     */
     saveStreaks(current, longest) {
-        if (!this.isAvailable()) return false;
+        if (!this.isAvailable()) return;
         localStorage.setItem(this.keys.currentStreak, JSON.stringify(current));
         localStorage.setItem(this.keys.longestStreak, JSON.stringify(longest));
-        return true;
     }
 
-    /**
-     * Load streak information
-     */
     loadStreaks() {
         if (!this.isAvailable()) return { current: 0, longest: 0 };
         return {
-            current: Utils.parseJSON(localStorage.getItem(this.keys.currentStreak)) || 0,
-            longest: Utils.parseJSON(localStorage.getItem(this.keys.longestStreak)) || 0
+            current: Utils.parseJSON(localStorage.getItem(this.keys.currentStreak), 0) || 0,
+            longest: Utils.parseJSON(localStorage.getItem(this.keys.longestStreak), 0) || 0
         };
     }
 
-    /**
-     * Clear all data
-     */
     clear() {
-        if (!this.isAvailable()) return false;
-        Object.values(this.keys).forEach(key => {
-            localStorage.removeItem(key);
-        });
-        return true;
+        if (!this.isAvailable()) return;
+        Object.values(this.keys).forEach((key) => localStorage.removeItem(key));
     }
 
-    /**
-     * Export all data as JSON
-     */
     exportData() {
         return {
             completedDays: this.loadCompletedDays(),
@@ -301,341 +166,298 @@ class StorageManager {
         };
     }
 
-    /**
-     * Import data from JSON
-     */
     importData(data) {
         if (!data || typeof data !== 'object') return false;
-
         try {
-            if (data.completedDays) this.saveCompletedDays(data.completedDays);
-            if (data.position) this.savePosition(data.position.module, data.position.week, data.position.day);
+            if (Array.isArray(data.completedDays)) this.saveCompletedDays(data.completedDays);
+            if (data.position) this.savePosition(data.position);
             if (data.settings) this.saveSettings(data.settings);
-            if (data.achievements) this.saveAchievements(data.achievements);
-            if (data.streaks) this.saveStreaks(data.streaks.current, data.streaks.longest);
+            if (Array.isArray(data.achievements)) this.saveAchievements(data.achievements);
+            if (data.streaks) this.saveStreaks(data.streaks.current || 0, data.streaks.longest || 0);
             return true;
-        } catch (error) {
-            console.error('Import Error:', error);
+        } catch {
             return false;
         }
     }
 }
 
-// =====================================================
-// DATA MANAGER
-// =====================================================
-
-/**
- * Manages roadmap data loading and structure
- */
 class DataManager {
     constructor() {
         this.roadmap = null;
         this.flatLearningDays = [];
+        this.totalLearningDays = DEFAULT_TOTAL_LEARNING_DAYS;
     }
 
-    /**
-     * Load roadmap from JSON file
-     */
     async load() {
-        try {
-            const response = await fetch('data/roadmap.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            this.roadmap = await response.json();
-            this.buildFlatLearningDays();
-            return true;
-        } catch (error) {
-            console.error('Error loading roadmap:', error);
-            return false;
+        const response = await fetch('data/roadmap.json');
+        if (!response.ok) {
+            throw new Error('Unable to load roadmap.json');
         }
+
+        this.roadmap = await response.json();
+        this.totalLearningDays = this.roadmap?.academy?.totalLearningDays || DEFAULT_TOTAL_LEARNING_DAYS;
+        this.buildFlatLearningDays();
+        return true;
     }
 
-    /**
-     * Build flat array of all learning days for quick access
-     */
     buildFlatLearningDays() {
         this.flatLearningDays = [];
-        if (!this.roadmap || !this.roadmap.modules) return;
+        if (!Array.isArray(this.roadmap?.phases)) return;
 
-        this.roadmap.modules.forEach(module => {
-            if (!module.weeks) return;
-            module.weeks.forEach(week => {
-                if (!week.learningDays) return;
-                week.learningDays.forEach(day => {
-                    this.flatLearningDays.push({
-                        ...day,
-                        moduleIndex: this.roadmap.modules.indexOf(module),
-                        moduleName: module.name,
-                        weekIndex: module.weeks.indexOf(week),
-                        weekName: week.name
+        this.roadmap.phases.forEach((phase) => {
+            (phase.modules || []).forEach((module) => {
+                (module.weeks || []).forEach((week) => {
+                    (week.learningDays || []).forEach((day) => {
+                        this.flatLearningDays.push({
+                            ...day,
+                            phaseNumber: phase.phaseNumber,
+                            phaseTitle: phase.title,
+                            moduleNumber: module.moduleNumber,
+                            moduleTitle: module.title,
+                            weekNumber: week.weekNumber,
+                            weekTitle: week.title
+                        });
                     });
                 });
             });
         });
+
+        this.flatLearningDays.sort((a, b) => a.dayNumber - b.dayNumber);
     }
 
-    /**
-     * Get learning day by number
-     */
     getLearningDay(dayNumber) {
-        return this.flatLearningDays.find(day => day.number === dayNumber);
+        return this.flatLearningDays.find((d) => d.dayNumber === dayNumber) || null;
     }
 
-    /**
-     * Get module by index
-     */
-    getModule(index) {
-        return this.roadmap?.modules?.[index] || null;
+    getPathForDay(dayNumber) {
+        const day = this.getLearningDay(dayNumber);
+        if (!day) return null;
+        return {
+            phaseNumber: day.phaseNumber,
+            phaseTitle: day.phaseTitle,
+            moduleNumber: day.moduleNumber,
+            moduleTitle: day.moduleTitle,
+            weekNumber: day.weekNumber,
+            weekTitle: day.weekTitle,
+            dayNumber: day.dayNumber,
+            dayTitle: day.title
+        };
     }
 
-    /**
-     * Get week within module
-     */
-    getWeek(moduleIndex, weekIndex) {
-        return this.roadmap?.modules?.[moduleIndex]?.weeks?.[weekIndex] || null;
+    getWeeksForPhase(phase) {
+        const weeks = [];
+        (phase.modules || []).forEach((module) => {
+            (module.weeks || []).forEach((week) => {
+                weeks.push({
+                    ...week,
+                    moduleNumber: module.moduleNumber,
+                    moduleTitle: module.title
+                });
+            });
+        });
+        return weeks.sort((a, b) => a.weekNumber - b.weekNumber);
     }
 }
 
-// =====================================================
-// APP STATE MANAGER
-// =====================================================
-
-/**
- * Manages application state
- */
 class StateManager {
-    constructor() {
+    constructor(totalDays) {
+        this.totalDays = totalDays;
         this.completedDays = [];
-        this.currentPosition = { module: null, week: null, day: 1 };
-        this.achievedAchievements = [];
         this.settings = {
             studentName: '',
-            targetRole: '',
-            github: '',
-            linkedin: ''
+            targetRole: ''
         };
+        this.achievedAchievements = [];
         this.streaks = { current: 0, longest: 0 };
+        this.currentPosition = {
+            phaseNumber: 1,
+            phaseTitle: 'Not started',
+            moduleNumber: 1,
+            moduleTitle: 'Not started',
+            weekNumber: 1,
+            weekTitle: 'Not started',
+            dayNumber: 1,
+            dayTitle: 'Day 1'
+        };
     }
 
-    /**
-     * Initialize state from storage and data
-     */
-    initialize(storage, data) {
-        this.completedDays = storage.loadCompletedDays();
-        this.currentPosition = storage.loadPosition() || this.currentPosition;
+    initialize(storage, dataManager) {
+        this.completedDays = this.normalizeCompletedDays(storage.loadCompletedDays(), dataManager.totalLearningDays);
+        this.settings = { ...this.settings, ...(storage.loadSettings() || {}) };
         this.achievedAchievements = storage.loadAchievements();
-        this.settings = storage.loadSettings();
         this.streaks = storage.loadStreaks();
+        this.totalDays = dataManager.totalLearningDays;
 
-        // Calculate current position based on completed days
-        if (this.completedDays.length > 0) {
-            const lastCompleted = Math.max(...this.completedDays);
-            const nextDay = Math.min(lastCompleted + 1, TOTAL_LEARNING_DAYS);
-            const learningDay = data.getLearningDay(nextDay);
-            if (learningDay) {
-                this.currentPosition = {
-                    module: learningDay.moduleName,
-                    week: learningDay.weekName,
-                    day: nextDay
-                };
-            }
+        const storedPos = storage.loadPosition();
+        if (storedPos && typeof storedPos.dayNumber === 'number') {
+            this.currentPosition = { ...this.currentPosition, ...storedPos };
         }
 
+        this.updateCurrentPosition(dataManager);
         this.updateStreaks();
+        this.checkAchievements();
     }
 
-    /**
-     * Mark learning day as completed
-     */
-    markDayCompleted(dayNumber) {
-        if (!this.completedDays.includes(dayNumber)) {
-            this.completedDays.push(dayNumber);
-            this.completedDays.sort((a, b) => a - b);
-            this.updateStreaks();
-            return true;
+    normalizeCompletedDays(days, maxDays) {
+        if (!Array.isArray(days)) return [];
+        const unique = [...new Set(days.filter((d) => Number.isInteger(d) && d >= 1 && d <= maxDays))];
+        return unique.sort((a, b) => a - b);
+    }
+
+    getNextUnlockedDay() {
+        for (let i = 1; i <= this.totalDays; i++) {
+            if (!this.completedDays.includes(i)) return i;
         }
-        return false;
+        return this.totalDays;
     }
 
-    /**
-     * Mark learning day as incomplete
-     */
-    markDayIncomplete(dayNumber) {
-        const index = this.completedDays.indexOf(dayNumber);
-        if (index > -1) {
-            this.completedDays.splice(index, 1);
-            this.updateStreaks();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Check if learning day is completed
-     */
     isDayCompleted(dayNumber) {
         return this.completedDays.includes(dayNumber);
     }
 
-    /**
-     * Check if learning day is locked
-     */
     isDayLocked(dayNumber) {
-        // First day is always unlocked
         if (dayNumber === 1) return false;
-        // Day is locked if not completed and previous day is not completed
         return !this.completedDays.includes(dayNumber - 1);
     }
 
-    /**
-     * Update streak information
-     */
+    markDayCompleted(dayNumber) {
+        if (this.isDayLocked(dayNumber)) return false;
+        if (this.completedDays.includes(dayNumber)) return false;
+        this.completedDays.push(dayNumber);
+        this.completedDays.sort((a, b) => a - b);
+        this.updateStreaks();
+        this.checkAchievements();
+        return true;
+    }
+
+    markDayIncomplete(dayNumber) {
+        if (!this.completedDays.includes(dayNumber)) return false;
+
+        this.completedDays = this.completedDays.filter((d) => d < dayNumber);
+        this.updateStreaks();
+        this.checkAchievements();
+        return true;
+    }
+
+    updateCurrentPosition(dataManager) {
+        const nextDay = this.getNextUnlockedDay();
+        const path = dataManager.getPathForDay(nextDay) || dataManager.getPathForDay(this.totalDays);
+        if (path) {
+            this.currentPosition = path;
+        }
+    }
+
     updateStreaks() {
-        this.streaks.current = Utils.calculateCurrentStreak(this.completedDays);
-        this.streaks.longest = Math.max(this.streaks.longest, this.streaks.current);
+        if (this.completedDays.length === 0) {
+            this.streaks.current = 0;
+            this.streaks.longest = 0;
+            return;
+        }
+
+        const sorted = [...this.completedDays].sort((a, b) => a - b);
+
+        let longest = 1;
+        let running = 1;
+        for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i] === sorted[i - 1] + 1) {
+                running++;
+                longest = Math.max(longest, running);
+            } else {
+                running = 1;
+            }
+        }
+
+        let current = 1;
+        for (let i = sorted.length - 1; i > 0; i--) {
+            if (sorted[i] === sorted[i - 1] + 1) {
+                current++;
+            } else {
+                break;
+            }
+        }
+
+        this.streaks.current = current;
+        this.streaks.longest = Math.max(this.streaks.longest || 0, longest);
     }
 
-    /**
-     * Get current streak
-     */
-    getCurrentStreak() {
-        return this.streaks.current;
+    checkAchievements() {
+        const completed = this.completedDays.length;
+        this.achievedAchievements = ACHIEVEMENTS
+            .filter((a) => completed >= a.day)
+            .map((a) => a.day);
     }
 
-    /**
-     * Get longest streak
-     */
-    getLongestStreak() {
-        return this.streaks.longest;
+    updateSettings(newSettings) {
+        this.settings = { ...this.settings, ...newSettings };
     }
 
-    /**
-     * Get completed days count
-     */
     getCompletedCount() {
         return this.completedDays.length;
     }
 
-    /**
-     * Get remaining days count
-     */
     getRemainingCount() {
-        return TOTAL_LEARNING_DAYS - this.completedDays.length;
+        return Math.max(this.totalDays - this.completedDays.length, 0);
     }
 
-    /**
-     * Get progress percentage
-     */
-    getProgress() {
-        return Utils.calculatePercentage(this.completedDays.length, TOTAL_LEARNING_DAYS);
+    getProgressPercent() {
+        return Utils.calculatePercentage(this.getCompletedCount(), this.totalDays);
     }
 
-    /**
-     * Check and unlock new achievements
-     */
-    checkAchievements() {
-        const completed = this.completedDays.length;
-        ACHIEVEMENTS.forEach(achievement => {
-            if (completed >= achievement.day && !this.achievedAchievements.includes(achievement.day)) {
-                this.achievedAchievements.push(achievement.day);
-            }
-        });
-    }
-
-    /**
-     * Update settings
-     */
-    updateSettings(settings) {
-        this.settings = { ...this.settings, ...settings };
-    }
-
-    /**
-     * Update current position
-     */
-    updatePosition(module, week, day) {
-        this.currentPosition = { module, week, day };
+    getLearningHours(dataManager) {
+        return this.completedDays.reduce((sum, dayNum) => {
+            const day = dataManager.getLearningDay(dayNum);
+            return sum + (day?.estimatedHours || 0);
+        }, 0);
     }
 }
 
-// =====================================================
-// DASHBOARD MANAGER
-// =====================================================
-
-/**
- * Manages dashboard rendering and updates
- */
 class DashboardManager {
-    constructor(state, data) {
+    constructor(state, dataManager) {
         this.state = state;
-        this.data = data;
-        this.container = Utils.getElement('#dashboard');
+        this.dataManager = dataManager;
     }
 
-    /**
-     * Render dashboard
-     */
     render() {
-        if (!this.container) return;
-
         const completed = this.state.getCompletedCount();
         const remaining = this.state.getRemainingCount();
-        const progress = this.state.getProgress();
-        const currentStreak = this.state.getCurrentStreak();
-        const longestStreak = this.state.getLongestStreak();
+        const progress = this.state.getProgressPercent();
 
-        // Update metric cards
-        this.updateElement('#dashboard-current-module', this.state.currentPosition.module || 'Not started');
-        this.updateElement('#dashboard-current-week', this.state.currentPosition.week || 'Not started');
-        this.updateElement('#dashboard-current-day', `Day ${this.state.currentPosition.day}`);
-        this.updateElement('#dashboard-target-role', this.state.settings.targetRole || 'Production Engineer');
+        const phaseText = `Phase ${this.state.currentPosition.phaseNumber}: ${this.state.currentPosition.phaseTitle}`;
+        const moduleText = `Module ${this.state.currentPosition.moduleNumber}: ${this.state.currentPosition.moduleTitle}`;
+        const weekText = `Week ${this.state.currentPosition.weekNumber}`;
 
-        // Update progress
-        this.updateElement('#dashboard-progress-percentage', `${progress}%`);
-        this.updateProgressBar(progress);
-        this.updateElement('#dashboard-completed-days', completed);
-        this.updateElement('#dashboard-remaining-days', remaining);
+        this.updateText('#dashboard-current-module', phaseText);
+        this.updateText('#dashboard-current-week', moduleText);
+        this.updateText('#dashboard-current-day', `Day ${this.state.currentPosition.dayNumber}`);
+        this.updateText('#dashboard-target-role', this.state.settings.targetRole || this.dataManager.roadmap?.academy?.targetRole || 'Production AI and MLOps Engineer');
 
-        // Update streaks
-        this.updateElement('#dashboard-current-streak', currentStreak);
-        this.updateElement('#dashboard-longest-streak', longestStreak);
+        const metricSubtexts = Utils.getElements('#dashboard .metric-subtext');
+        if (metricSubtexts[0]) metricSubtexts[0].textContent = 'Current Phase';
+        if (metricSubtexts[1]) metricSubtexts[1].textContent = weekText;
+        if (metricSubtexts[2]) metricSubtexts[2].textContent = `of ${this.state.totalDays}`;
 
-        // Update completion date
-        const completionDate = Utils.estimateCompletionDate(completed);
-        this.updateElement('#dashboard-completion-date', completionDate);
+        this.updateText('#dashboard-progress-percentage', `${progress}%`);
+        this.updateText('#dashboard-completed-days', `${completed}`);
+        this.updateText('#dashboard-remaining-days', `${remaining}`);
+
+        const bar = Utils.getElement('#dashboard-progress-bar');
+        if (bar) bar.style.width = `${progress}%`;
+
+        this.updateText('#dashboard-current-streak', `${this.state.streaks.current}`);
+        this.updateText('#dashboard-longest-streak', `${this.state.streaks.longest}`);
+        this.updateText('#dashboard-completion-date', Utils.estimateCompletionDate(completed, this.state.totalDays));
     }
 
-    /**
-     * Update element text safely
-     */
-    updateElement(selector, text) {
-        const element = Utils.getElement(selector);
-        if (element) element.textContent = text;
-    }
-
-    /**
-     * Update progress bar width
-     */
-    updateProgressBar(percentage) {
-        const progressBar = Utils.getElement('#dashboard-progress-bar');
-        if (progressBar) {
-            progressBar.style.width = `${percentage}%`;
-        }
+    updateText(selector, value) {
+        const el = Utils.getElement(selector);
+        if (el) el.textContent = value;
     }
 }
 
-// =====================================================
-// ROADMAP MANAGER
-// =====================================================
-
-/**
- * Manages roadmap rendering with accordion functionality
- */
 class RoadmapManager {
-    constructor(state, data) {
+    constructor(state, dataManager) {
         this.state = state;
-        this.data = data;
+        this.dataManager = dataManager;
         this.container = Utils.getElement('#roadmap-content');
         this.expandAllBtn = Utils.getElement('#expand-all-btn');
         this.collapseAllBtn = Utils.getElement('#collapse-all-btn');
@@ -643,536 +465,357 @@ class RoadmapManager {
         this.registerEvents();
     }
 
-    /**
-     * Register event listeners
-     */
     registerEvents() {
-        if (this.expandAllBtn) {
-            this.expandAllBtn.addEventListener('click', () => this.expandAll());
-        }
-        if (this.collapseAllBtn) {
-            this.collapseAllBtn.addEventListener('click', () => this.collapseAll());
-        }
-        if (this.searchInput) {
-            this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
-        }
+        this.expandAllBtn?.addEventListener('click', () => this.expandAll());
+        this.collapseAllBtn?.addEventListener('click', () => this.collapseAll());
+        this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value || ''));
     }
 
-    /**
-     * Render roadmap
-     */
     render() {
-        if (!this.container || !this.data.roadmap) return;
+        if (!this.container || !Array.isArray(this.dataManager.roadmap?.phases)) return;
 
         const fragment = document.createDocumentFragment();
-        this.data.roadmap.modules.forEach((module, moduleIndex) => {
-            const moduleElement = this.createModuleElement(module, moduleIndex);
-            fragment.appendChild(moduleElement);
+
+        this.dataManager.roadmap.phases.forEach((phase) => {
+            const phaseEl = Utils.createElement('div', { className: 'accordion-module' });
+
+            const phaseHeader = Utils.createElement('button', { className: 'accordion-header', type: 'button' });
+            const phaseDays = this.countPhaseDays(phase);
+            phaseHeader.innerHTML = `
+                <span>Phase ${phase.phaseNumber}: ${phase.title}</span>
+                <span class="accordion-toggle">▼</span>
+            `;
+
+            const phaseContent = Utils.createElement('div', { className: 'accordion-content' });
+            const phaseInfo = Utils.createElement('div', { className: 'learning-day-time' });
+            phaseInfo.textContent = `${phaseDays} learning days`;
+            phaseContent.appendChild(phaseInfo);
+
+            const weeks = this.dataManager.getWeeksForPhase(phase);
+            weeks.forEach((week) => {
+                const weekEl = this.createWeekElement(week);
+                phaseContent.appendChild(weekEl);
+            });
+
+            phaseHeader.addEventListener('click', () => {
+                phaseHeader.classList.toggle('active');
+                phaseContent.classList.toggle('active');
+            });
+
+            phaseEl.appendChild(phaseHeader);
+            phaseEl.appendChild(phaseContent);
+            fragment.appendChild(phaseEl);
         });
 
         this.container.innerHTML = '';
         this.container.appendChild(fragment);
     }
 
-    /**
-     * Create module element
-     */
-    createModuleElement(module, moduleIndex) {
-        const moduleDiv = Utils.createElement('div', { className: 'accordion-module' });
-        
-        // Module header
-        const header = Utils.createElement('button', { className: 'accordion-header' });
-        header.innerHTML = `
-            ${module.name}
+    countPhaseDays(phase) {
+        return (phase.modules || []).reduce((phaseAcc, module) => {
+            return phaseAcc + (module.weeks || []).reduce((weekAcc, week) => weekAcc + (week.learningDays || []).length, 0);
+        }, 0);
+    }
+
+    createWeekElement(week) {
+        const weekEl = Utils.createElement('div', { className: 'accordion-week' });
+        const weekHeader = Utils.createElement('button', { className: 'accordion-header', type: 'button' });
+        weekHeader.innerHTML = `
+            <span>Week ${week.weekNumber}: ${week.title}</span>
             <span class="accordion-toggle">▼</span>
         `;
-        
-        // Module content
-        const content = Utils.createElement('div', { className: 'accordion-content' });
-        const weekFragment = document.createDocumentFragment();
-        
-        // Check if module has weeks (future structure) or only skills (current structure)
 
-        if (module.weeks && Array.isArray(module.weeks) && module.weeks.length > 0) {
-        
-            // Existing structure (Weeks -> Learning Days)
-            module.weeks.forEach((week, weekIndex) => {
-                const weekElement = this.createWeekElement(week, moduleIndex, weekIndex);
-                weekFragment.appendChild(weekElement);
-            });
-        
-        } else if (module.skills && Array.isArray(module.skills)) {
-        
-            // Current structure (Skills only)
-            const skillsContainer = Utils.createElement('div', {
-                className: 'skills-container'
-            });
-        
-            const skillsTitle = Utils.createElement('h4');
-            skillsTitle.textContent = `Skills (${module.skills.length})`;
-        
-            skillsContainer.appendChild(skillsTitle);
-        
-            const skillsGrid = Utils.createElement('div', {
-                className: 'skills-grid'
-            });
-        
-            module.skills.forEach(skill => {
-        
-                const skillCard = Utils.createElement('div', {
-                    className: 'skill-card'
-                });
-        
-                skillCard.innerHTML = `
-                    <span class="skill-icon">✅</span>
-                    <span class="skill-name">${skill}</span>
-                `;
-        
-                skillsGrid.appendChild(skillCard);
-        
-            });
-        
-            skillsContainer.appendChild(skillsGrid);
-            content.appendChild(skillsContainer);
-        
-        }
-        
-        content.appendChild(weekFragment);
-        
-        // Toggle functionality
-        header.addEventListener('click', () => {
-            header.classList.toggle('active');
-            content.classList.toggle('active');
+        const weekContent = Utils.createElement('div', { className: 'accordion-content' });
+        const moduleHint = Utils.createElement('div', { className: 'learning-day-time' });
+        moduleHint.textContent = `Module ${week.moduleNumber}: ${week.moduleTitle}`;
+        weekContent.appendChild(moduleHint);
+
+        (week.learningDays || []).forEach((day) => {
+            weekContent.appendChild(this.createLearningDayElement(day));
         });
-        
-        moduleDiv.appendChild(header);
-        moduleDiv.appendChild(content);
-        
-        return moduleDiv;
-        }
-        
-        /**
-         * Create week element
-         */
-        createWeekElement(week, moduleIndex, weekIndex) {
-        
-            const weekDiv = Utils.createElement('div', {
-                className: 'accordion-week'
-            });
-        
-            const header = Utils.createElement('button', {
-                className: 'accordion-header'
-            });
-        
-            header.innerHTML = `
-                ${week.name}
-                <span class="accordion-toggle">▼</span>
-            `;
-        
-            const content = Utils.createElement('div', {
-                className: 'accordion-content'
-            });
-        
-            const dayFragment = document.createDocumentFragment();
-        
-            if (week.learningDays && Array.isArray(week.learningDays)) {
-        
-                week.learningDays.forEach(day => {
-        
-                    const dayElement = this.createLearningDayElement(day);
-        
-                    dayFragment.appendChild(dayElement);
-        
-                });
-        
-            } else {
-        
-                const emptyMessage = Utils.createElement('div', {
-                    className: 'empty-message'
-                });
-        
-                emptyMessage.innerHTML = `
-                    <p>No learning days available yet.</p>
-                `;
-        
-                dayFragment.appendChild(emptyMessage);
-        
-            }
-        
-            content.appendChild(dayFragment);
-        
-            header.addEventListener('click', () => {
-                header.classList.toggle('active');
-                content.classList.toggle('active');
-            });
-        
-            weekDiv.appendChild(header);
-            weekDiv.appendChild(content);
-        
-            return weekDiv;
-        }
 
-    /**
-     * Handle day checkbox change
-     */
+        weekHeader.addEventListener('click', () => {
+            weekHeader.classList.toggle('active');
+            weekContent.classList.toggle('active');
+        });
+
+        weekEl.appendChild(weekHeader);
+        weekEl.appendChild(weekContent);
+        return weekEl;
+    }
+
+    createLearningDayElement(day) {
+        const isCompleted = this.state.isDayCompleted(day.dayNumber);
+        const isLocked = this.state.isDayLocked(day.dayNumber);
+
+        const wrapper = Utils.createElement('div', { className: 'accordion-day' });
+        const row = Utils.createElement('div', {
+            className: `learning-day-item ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`,
+            tabIndex: isLocked ? -1 : 0
+        });
+
+        const checkbox = Utils.createElement('input', {
+            className: 'learning-day-checkbox',
+            type: 'checkbox',
+            checked: isCompleted,
+            disabled: isLocked,
+            'aria-label': `Mark day ${day.dayNumber} as completed`
+        });
+
+        checkbox.addEventListener('change', (e) => {
+            this.handleDayCheckboxChange(day.dayNumber, e.target.checked);
+        });
+
+        const info = Utils.createElement('div', { className: 'learning-day-info' });
+        const number = Utils.createElement('div', { className: 'learning-day-number' });
+        number.textContent = `Day ${day.dayNumber}`;
+
+        const title = Utils.createElement('div', { className: 'learning-day-title' });
+        title.textContent = day.title;
+
+        const time = Utils.createElement('div', { className: 'learning-day-time' });
+        time.textContent = `${day.estimatedHours} hrs | ${day.difficulty} | ${day.type}`;
+
+        info.appendChild(number);
+        info.appendChild(title);
+        info.appendChild(time);
+
+        const status = Utils.createElement('div', { className: 'learning-day-status' });
+        status.textContent = isLocked ? 'Locked' : (isCompleted ? 'Completed' : 'Not Started');
+
+        row.appendChild(checkbox);
+        row.appendChild(info);
+        row.appendChild(status);
+
+        const details = Utils.createElement('div', { className: 'accordion-content' });
+        details.innerHTML = this.buildDayDetails(day);
+
+        row.addEventListener('click', (e) => {
+            if (e.target === checkbox || isLocked) return;
+            row.classList.toggle('active');
+            details.classList.toggle('active');
+        });
+
+        row.addEventListener('keydown', (e) => {
+            if (isLocked) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                row.classList.toggle('active');
+                details.classList.toggle('active');
+            }
+        });
+
+        wrapper.appendChild(row);
+        wrapper.appendChild(details);
+        return wrapper;
+    }
+
+    buildDayDetails(day) {
+        const objectives = (day.learningObjectives || []).map((o) => `<li>${o}</li>`).join('');
+        const interviews = (day.interviewTopics || []).map((q) => `<li>${q}</li>`).join('');
+        const tags = (day.tags || []).join(', ');
+
+        return `
+            <div class="day-detail-grid">
+                <h4>Learning Objectives</h4>
+                <ul>${objectives}</ul>
+                <h4>Assignment</h4>
+                <p>${day.assignmentTitle || 'N/A'}</p>
+                <h4>Mini Project</h4>
+                <p>${day.miniProject || 'N/A'}</p>
+                <h4>Interview Questions</h4>
+                <ul>${interviews}</ul>
+                <p><strong>Tags:</strong> ${tags}</p>
+            </div>
+        `;
+    }
+
     handleDayCheckboxChange(dayNumber, isChecked) {
         if (isChecked) {
             this.state.markDayCompleted(dayNumber);
         } else {
             this.state.markDayIncomplete(dayNumber);
         }
-        // Trigger update event
-        window.dispatchEvent(new CustomEvent('dayUpdated', { detail: { dayNumber, isChecked } }));
+
+        this.state.updateCurrentPosition(this.dataManager);
+        window.dispatchEvent(new CustomEvent('dayUpdated'));
     }
 
-    /**
-     * Expand all accordions
-     */
     expandAll() {
-        const headers = Utils.getElements('#roadmap-content .accordion-header');
-        const contents = Utils.getElements('#roadmap-content .accordion-content');
-        
-        headers.forEach(header => header.classList.add('active'));
-        contents.forEach(content => content.classList.add('active'));
+        Utils.getElements('#roadmap-content .accordion-header').forEach((el) => el.classList.add('active'));
+        Utils.getElements('#roadmap-content .accordion-content').forEach((el) => el.classList.add('active'));
     }
 
-    /**
-     * Collapse all accordions
-     */
     collapseAll() {
-        const headers = Utils.getElements('#roadmap-content .accordion-header');
-        const contents = Utils.getElements('#roadmap-content .accordion-content');
-        
-        headers.forEach(header => header.classList.remove('active'));
-        contents.forEach(content => content.classList.remove('active'));
+        Utils.getElements('#roadmap-content .accordion-header').forEach((el) => el.classList.remove('active'));
+        Utils.getElements('#roadmap-content .accordion-content').forEach((el) => el.classList.remove('active'));
     }
 
-    /**
-     * Handle search
-     */
-    handleSearch(searchTerm) {
-        const allDays = Utils.getElements('.learning-day-item');
-        const searchLower = searchTerm.toLowerCase();
-        
-        allDays.forEach(dayElement => {
-            const title = dayElement.querySelector('.learning-day-title')?.textContent || '';
-            const dayNum = dayElement.querySelector('.learning-day-number')?.textContent || '';
-            
-            const matches = title.toLowerCase().includes(searchLower) || 
-                          dayNum.toLowerCase().includes(searchLower);
-            
-            dayElement.style.display = matches ? 'flex' : 'none';
+    handleSearch(value) {
+        const term = value.trim().toLowerCase();
+        const dayItems = Utils.getElements('.accordion-day');
+
+        dayItems.forEach((item) => {
+            const title = item.querySelector('.learning-day-title')?.textContent?.toLowerCase() || '';
+            const number = item.querySelector('.learning-day-number')?.textContent?.toLowerCase() || '';
+            const tags = item.querySelector('.day-detail-grid p:last-child')?.textContent?.toLowerCase() || '';
+            const show = !term || title.includes(term) || number.includes(term) || tags.includes(term);
+            item.style.display = show ? '' : 'none';
         });
     }
 }
 
-// =====================================================
-// PROGRESS MANAGER
-// =====================================================
-
-/**
- * Manages progress section rendering
- */
 class ProgressManager {
-    constructor(state, data) {
+    constructor(state, dataManager) {
         this.state = state;
-        this.data = data;
-        this.container = Utils.getElement('#progress');
+        this.dataManager = dataManager;
     }
 
-    /**
-     * Render progress section
-     */
     render() {
-        if (!this.container) return;
+        this.updateText('#progress-total-completed', `${this.state.getCompletedCount()} days`);
+        this.updateText('#progress-remaining', `${this.state.getRemainingCount()} days`);
+        this.updateText('#progress-percentage', `${this.state.getProgressPercent()}%`);
+        this.updateText('#progress-hours-completed', `${this.state.getLearningHours(this.dataManager)} hrs`);
 
-        const completed = this.state.getCompletedCount();
-        const remaining = this.state.getRemainingCount();
-        const progress = this.state.getProgress();
-
-        // Update stat cards
-        this.updateElement('#progress-total-completed', `${completed} days`);
-        this.updateElement('#progress-remaining', `${remaining} days`);
-        this.updateElement('#progress-percentage', `${progress}%`);
-
-        // Calculate estimated hours
-        const completedHours = this.calculateCompletedHours();
-        this.updateElement('#progress-hours-completed', `${completedHours} hrs`);
-
-        // Update current focus
-        this.updateElement('#progress-current-module', this.state.currentPosition.module || 'Not started');
-        this.updateElement('#progress-current-week', this.state.currentPosition.week || 'Not started');
-        this.updateElement('#progress-current-day', `Day ${this.state.currentPosition.day} of ${TOTAL_LEARNING_DAYS}`);
+        this.updateText('#progress-current-module', this.state.currentPosition.moduleTitle || 'Not started');
+        this.updateText('#progress-current-week', `Week ${this.state.currentPosition.weekNumber}`);
+        this.updateText('#progress-current-day', `Day ${this.state.currentPosition.dayNumber} of ${this.state.totalDays}`);
     }
 
-    /**
-     * Calculate completed hours
-     */
-    calculateCompletedHours() {
-        let completed = 0;
-        this.state.completedDays.forEach(dayNum => {
-            const day = this.data.getLearningDay(dayNum);
-            completed += day?.estimatedHours || 0;
-        });
-        return completed;
-    }
-
-    /**
-     * Update element text safely
-     */
-    updateElement(selector, text) {
-        const element = Utils.getElement(selector);
-        if (element) element.textContent = text;
+    updateText(selector, value) {
+        const el = Utils.getElement(selector);
+        if (el) el.textContent = value;
     }
 }
 
-// =====================================================
-// ACHIEVEMENT MANAGER
-// =====================================================
-
-/**
- * Manages achievements rendering
- */
 class AchievementManager {
     constructor(state) {
         this.state = state;
         this.container = Utils.getElement('#achievements-grid');
     }
 
-    /**
-     * Render achievements
-     */
     render() {
         if (!this.container) return;
 
         const fragment = document.createDocumentFragment();
-        
-        ACHIEVEMENTS.forEach(achievement => {
-            const isUnlocked = this.state.achievedAchievements.includes(achievement.day);
-            const badgeElement = this.createBadgeElement(achievement, isUnlocked);
-            fragment.appendChild(badgeElement);
+        ACHIEVEMENTS.forEach((achievement) => {
+            const unlocked = this.state.achievedAchievements.includes(achievement.day);
+            const badge = Utils.createElement('div', {
+                className: `achievement-badge ${unlocked ? 'unlocked' : ''}`
+            });
+            badge.innerHTML = `
+                <div class="achievement-icon">${achievement.emoji}</div>
+                <div class="achievement-title">${achievement.title}</div>
+                <div class="achievement-description">${achievement.description}</div>
+                <div class="achievement-unlock-at">Day ${achievement.day}</div>
+            `;
+            fragment.appendChild(badge);
         });
 
         this.container.innerHTML = '';
         this.container.appendChild(fragment);
     }
-
-    /**
-     * Create badge element
-     */
-    createBadgeElement(achievement, isUnlocked) {
-        const badge = Utils.createElement('div', {
-            className: `achievement-badge ${isUnlocked ? 'unlocked' : ''}`
-        });
-
-        badge.innerHTML = `
-            <div class="achievement-icon">${achievement.emoji}</div>
-            <div class="achievement-title">${achievement.title}</div>
-            <div class="achievement-description">${achievement.description}</div>
-            <div class="achievement-unlock-at">Day ${achievement.day}</div>
-        `;
-
-        return badge;
-    }
 }
 
-// =====================================================
-// STATISTICS MANAGER
-// =====================================================
-
-/**
- * Manages statistics section rendering
- */
 class StatisticsManager {
-    constructor(state, data) {
+    constructor(state, dataManager) {
         this.state = state;
-        this.data = data;
-        this.container = Utils.getElement('#statistics');
+        this.dataManager = dataManager;
     }
 
-    /**
-     * Render statistics
-     */
     render() {
-        if (!this.container) return;
+        this.updateText('#stats-completed', `${this.state.getCompletedCount()}`);
+        this.updateText('#stats-remaining', `${this.state.getRemainingCount()}`);
+        this.updateText('#stats-progress', `${this.state.getProgressPercent()}`);
+        this.updateText('#stats-badges', `${this.state.achievedAchievements.length}`);
+
+        this.renderModuleStats();
+        this.renderInsights();
+    }
+
+    renderModuleStats() {
+        const container = Utils.getElement('#module-stats');
+        if (!container) return;
+
+        const rows = [];
+        (this.dataManager.roadmap?.phases || []).forEach((phase) => {
+            (phase.modules || []).forEach((module) => {
+                const days = this.dataManager.flatLearningDays.filter((d) => d.moduleTitle === module.title);
+                const done = days.filter((d) => this.state.isDayCompleted(d.dayNumber)).length;
+                rows.push(`<div class="module-stat-item"><span class="module-stat-name">Phase ${phase.phaseNumber} - ${module.title}</span><span class="module-stat-value">${done}/${days.length}</span></div>`);
+            });
+        });
+
+        container.innerHTML = rows.join('');
+    }
+
+    renderInsights() {
+        const container = Utils.getElement('#insights-list');
+        if (!container) return;
 
         const completed = this.state.getCompletedCount();
-        const remaining = this.state.getRemainingCount();
-        const progress = this.state.getProgress();
-        const achievementCount = this.state.achievedAchievements.length;
-
-        // Update overview boxes
-        this.updateElement('#stats-completed', completed);
-        this.updateElement('#stats-remaining', remaining);
-        this.updateElement('#stats-progress', progress);
-        this.updateElement('#stats-badges', `${achievementCount}`);
-
-        // Update module statistics
-        this.renderModuleStats();
-
-        // Update insights
-        this.renderInsights(completed);
-    }
-
-    /**
-     * Render module statistics
-     */
-    renderModuleStats() {
-        const moduleStatsContainer = Utils.getElement('#module-stats');
-        if (!moduleStatsContainer) return;
-
-        const fragment = document.createDocumentFragment();
-        
-        this.data.roadmap?.modules.forEach(module => {
-            const moduleLearningDays = this.data.flatLearningDays.filter(
-                day => day.moduleName === module.name
-            );
-            
-            const completedInModule = moduleLearningDays.filter(
-                day => this.state.isDayCompleted(day.number)
-            ).length;
-
-            const statItem = Utils.createElement('div', { className: 'module-stat-item' });
-            statItem.innerHTML = `
-                <span class="module-stat-name">${module.name}</span>
-                <span class="module-stat-value">${completedInModule}/${moduleLearningDays.length}</span>
-            `;
-            
-            fragment.appendChild(statItem);
-        });
-
-        moduleStatsContainer.innerHTML = '';
-        moduleStatsContainer.appendChild(fragment);
-    }
-
-    /**
-     * Render insights
-     */
-    renderInsights(completed) {
-        const insightsList = Utils.getElement('#insights-list');
-        if (!insightsList) return;
-
         const insights = [];
 
-        if (completed === 0) {
-            insights.push('Start completing learning days to see insights');
-        } else if (completed < 10) {
-            insights.push('💪 Great start! Keep the momentum going');
-        } else if (completed < 50) {
-            insights.push('🚀 You\'re making excellent progress!');
-        } else if (completed < 100) {
-            insights.push('⭐ You\'re halfway there! Amazing persistence');
-        } else if (completed < 150) {
-            insights.push('🏆 Over 100 days! You\'re unstoppable');
-        } else if (completed < 200) {
-            insights.push('👑 Legendary! Almost at the finish line');
-        } else {
-            insights.push('🎉 You did it! Enterprise AI & MLOps Engineer!');
-        }
+        if (completed === 0) insights.push('Start Day 1 to unlock your learning streak.');
+        if (completed > 0 && completed < 30) insights.push('Early consistency matters more than speed. Focus on daily completion.');
+        if (completed >= 30 && completed < 100) insights.push('You are building strong engineering depth. Keep assignments hands-on.');
+        if (completed >= 100) insights.push('You are in advanced execution stage. Emphasize production readiness and interviews.');
 
-        insights.push(`Current Streak: ${this.state.getCurrentStreak()} days`);
-        insights.push(`Longest Streak: ${this.state.getLongestStreak()} days`);
+        insights.push(`Current streak: ${this.state.streaks.current} days`);
+        insights.push(`Longest streak: ${this.state.streaks.longest} days`);
+        insights.push(`Learning hours completed: ${this.state.getLearningHours(this.dataManager)} hrs`);
 
-        const fragment = document.createDocumentFragment();
-        insights.forEach(insight => {
-            const li = Utils.createElement('li');
-            li.textContent = insight;
-            fragment.appendChild(li);
-        });
-
-        insightsList.innerHTML = '';
-        insightsList.appendChild(fragment);
+        container.innerHTML = insights.map((i) => `<li>${i}</li>`).join('');
     }
 
-    /**
-     * Update element text safely
-     */
-    updateElement(selector, text) {
-        const element = Utils.getElement(selector);
-        if (element) element.textContent = text;
+    updateText(selector, value) {
+        const el = Utils.getElement(selector);
+        if (el) el.textContent = value;
     }
 }
 
-// =====================================================
-// SETTINGS MANAGER
-// =====================================================
-
-/**
- * Manages settings section
- */
 class SettingsManager {
     constructor(state, storage) {
         this.state = state;
         this.storage = storage;
-        this.container = Utils.getElement('#settings');
         this.registerEvents();
-    }
-
-    /**
-     * Register event listeners
-     */
-    registerEvents() {
-        // Profile form
-        const profileForm = Utils.getElement('#profile-form');
-        if (profileForm) {
-            profileForm.addEventListener('submit', (e) => this.handleProfileSubmit(e));
-        }
-
-        // Export button
-        const exportBtn = Utils.getElement('#export-btn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.handleExport());
-        }
-
-        // Import button
-        const importBtn = Utils.getElement('#import-btn');
-        if (importBtn) {
-            importBtn.addEventListener('click', () => {
-                const fileInput = Utils.getElement('#import-file');
-                fileInput?.click();
-            });
-        }
-
-        // Import file input
-        const fileInput = Utils.getElement('#import-file');
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => this.handleImport(e));
-        }
-
-        // Reset button
-        const resetBtn = Utils.getElement('#reset-btn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => this.handleReset());
-        }
-
-        // Load initial values
         this.loadSettings();
     }
 
-    /**
-     * Load settings into form
-     */
+    registerEvents() {
+        const profileForm = Utils.getElement('#profile-form');
+        profileForm?.addEventListener('submit', (e) => this.handleProfileSubmit(e));
+
+        Utils.getElement('#export-btn')?.addEventListener('click', () => this.handleExport());
+
+        Utils.getElement('#import-btn')?.addEventListener('click', () => {
+            Utils.getElement('#import-file')?.click();
+        });
+
+        Utils.getElement('#import-file')?.addEventListener('change', (e) => this.handleImport(e));
+        Utils.getElement('#reset-btn')?.addEventListener('click', () => this.handleReset());
+    }
+
     loadSettings() {
-        const studentNameInput = Utils.getElement('#settings-student-name');
-        const targetRoleInput = Utils.getElement('#settings-target-role');
+        const studentName = this.state.settings.studentName || '';
+        const targetRole = this.state.settings.targetRole || '';
+
+        const studentInput = Utils.getElement('#settings-student-name');
+        const roleInput = Utils.getElement('#settings-target-role');
         const githubInput = Utils.getElement('#settings-github');
         const linkedinInput = Utils.getElement('#settings-linkedin');
 
-        if (studentNameInput) studentNameInput.value = this.state.settings.studentName || '';
-        if (targetRoleInput) targetRoleInput.value = this.state.settings.targetRole || '';
+        if (studentInput) studentInput.value = studentName;
+        if (roleInput) roleInput.value = targetRole;
         if (githubInput) githubInput.value = this.state.settings.github || '';
         if (linkedinInput) linkedinInput.value = this.state.settings.linkedin || '';
 
-        // Update display names
         const displayName = Utils.getElement('#student-name-display');
         const displayRole = Utils.getElement('#target-role-display');
-        if (displayName) displayName.textContent = this.state.settings.studentName || 'Welcome';
-        if (displayRole) displayRole.textContent = this.state.settings.targetRole || 'Senior Azure DevOps Engineer';
+        if (displayName) displayName.textContent = studentName || 'Welcome';
+        if (displayRole) displayRole.textContent = targetRole || 'Senior Azure DevOps Engineer';
     }
 
-    /**
-     * Handle profile form submission
-     */
     handleProfileSubmit(e) {
         e.preventDefault();
 
@@ -1191,71 +834,52 @@ class SettingsManager {
         window.dispatchEvent(new CustomEvent('settingsUpdated'));
     }
 
-    /**
-     * Handle export
-     */
     handleExport() {
         const data = this.storage.exportData();
-        const json = JSON.stringify(data, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
-        link.href = url;
+        link.href = URL.createObjectURL(blob);
         link.download = `mlops-academy-progress-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(link.href);
     }
 
-    /**
-     * Handle import
-     */
     handleImport(e) {
         const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            try {
-                const data = Utils.parseJSON(event.target.result);
-                if (data && this.storage.importData(data)) {
-                    Utils.alert('Progress imported successfully!');
-                    window.location.reload();
-                } else {
-                    Utils.alert('Invalid import file format');
-                }
-            } catch (error) {
-                console.error('Import error:', error);
-                Utils.alert('Error importing file');
+            const data = Utils.parseJSON(event.target.result, null);
+            if (!data) {
+                Utils.alert('Invalid import file format.');
+                return;
+            }
+            const ok = this.storage.importData(data);
+            if (ok) {
+                Utils.alert('Progress imported successfully!');
+                window.location.reload();
+            } else {
+                Utils.alert('Unable to import progress file.');
             }
         };
         reader.readAsText(file);
     }
 
-    /**
-     * Handle reset
-     */
     handleReset() {
-        if (Utils.confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
-            this.storage.clear();
-            Utils.alert('All progress has been reset');
-            window.location.reload();
-        }
+        if (!Utils.confirm('Are you sure you want to reset all progress? This cannot be undone.')) return;
+        this.storage.clear();
+        Utils.alert('All progress has been reset.');
+        window.location.reload();
     }
 }
 
-// =====================================================
-// MAIN APPLICATION
-// =====================================================
-
-/**
- * Main application controller
- * Orchestrates all components and manages the application lifecycle
- */
 class App {
     constructor() {
         this.storage = new StorageManager();
         this.dataManager = new DataManager();
-        this.state = new StateManager();
+        this.state = new StateManager(DEFAULT_TOTAL_LEARNING_DAYS);
+
         this.dashboardManager = null;
         this.roadmapManager = null;
         this.progressManager = null;
@@ -1264,26 +888,11 @@ class App {
         this.settingsManager = null;
     }
 
-    /**
-     * Initialize application
-     */
     async init() {
         try {
-            // Load roadmap data
-            const dataLoaded = await this.dataManager.load();
-            if (!dataLoaded) {
-                console.error('Failed to load roadmap data');
-                Utils.alert('Error loading roadmap. Please refresh the page.');
-                return;
-            }
-
-            // Initialize state from storage
+            await this.dataManager.load();
             this.state.initialize(this.storage, this.dataManager);
 
-            // Check for new achievements
-            this.state.checkAchievements();
-
-            // Create managers
             this.dashboardManager = new DashboardManager(this.state, this.dataManager);
             this.roadmapManager = new RoadmapManager(this.state, this.dataManager);
             this.progressManager = new ProgressManager(this.state, this.dataManager);
@@ -1291,48 +900,33 @@ class App {
             this.statisticsManager = new StatisticsManager(this.state, this.dataManager);
             this.settingsManager = new SettingsManager(this.state, this.storage);
 
-            // Render all sections
-            this.renderAll();
-
-            // Register navigation events
             this.registerNavigationEvents();
-
-            // Register update events
             this.registerUpdateEvents();
 
-            // Save initial state
+            this.renderAll();
             this.saveState();
         } catch (error) {
-            console.error('Application initialization error:', error);
-            Utils.alert('An error occurred. Please refresh the page.');
+            console.error('Initialization failed:', error);
+            Utils.alert('Unable to initialize portal. Please refresh the page.');
         }
     }
 
-    /**
-     * Register navigation events
-     */
     registerNavigationEvents() {
         const navButtons = Utils.getElements('.nav-btn');
-        
-        navButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
+        navButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
                 const section = btn.getAttribute('data-section');
                 this.switchSection(section);
-                
-                // Update active nav button
-                navButtons.forEach(b => b.classList.remove('active'));
+
+                navButtons.forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
             });
         });
     }
 
-    /**
-     * Register update events
-     */
     registerUpdateEvents() {
         window.addEventListener('dayUpdated', () => {
-            this.state.checkAchievements();
+            this.state.updateCurrentPosition(this.dataManager);
             this.renderAll();
             this.saveState();
         });
@@ -1343,24 +937,12 @@ class App {
         });
     }
 
-    /**
-     * Switch section
-     */
     switchSection(sectionName) {
-        const sections = Utils.getElements('.section');
-        sections.forEach(section => {
-            section.classList.remove('active');
-        });
-
-        const targetSection = Utils.getElement(`#${sectionName}`);
-        if (targetSection) {
-            targetSection.classList.add('active');
-        }
+        Utils.getElements('.section').forEach((section) => section.classList.remove('active'));
+        const active = Utils.getElement(`#${sectionName}`);
+        if (active) active.classList.add('active');
     }
 
-    /**
-     * Render all components
-     */
     renderAll() {
         this.dashboardManager.render();
         this.roadmapManager.render();
@@ -1369,39 +951,24 @@ class App {
         this.statisticsManager.render();
     }
 
-    /**
-     * Save application state to storage
-     */
     saveState() {
         this.storage.saveCompletedDays(this.state.completedDays);
-        this.storage.savePosition(
-            this.state.currentPosition.module,
-            this.state.currentPosition.week,
-            this.state.currentPosition.day
-        );
-        this.storage.saveAchievements(this.state.achievedAchievements);
+        this.storage.savePosition(this.state.currentPosition);
         this.storage.saveSettings(this.state.settings);
+        this.storage.saveAchievements(this.state.achievedAchievements);
         this.storage.saveStreaks(this.state.streaks.current, this.state.streaks.longest);
     }
 }
 
-// =====================================================
-// APPLICATION STARTUP
-// =====================================================
-
-/**
- * Initialize application when DOM is ready
- */
 document.addEventListener('DOMContentLoaded', async () => {
     const app = new App();
     await app.init();
 });
 
-// Handle errors gracefully
-window.addEventListener('error', (event) => {
-    console.error('Global error:', event.error);
+window.addEventListener('error', (e) => {
+    console.error('Unhandled app error:', e.error || e.message);
 });
 
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('Unhandled promise rejection:', event.reason);
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('Unhandled promise rejection:', e.reason);
 });

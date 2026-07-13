@@ -48,6 +48,18 @@ class Utils {
         return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
+    static startOfDay(date) {
+        const d = date instanceof Date ? new Date(date.getTime()) : new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    static daysBetween(startDate, endDate) {
+        const start = this.startOfDay(startDate).getTime();
+        const end = this.startOfDay(endDate).getTime();
+        return Math.floor((end - start) / (24 * 60 * 60 * 1000));
+    }
+
     static estimateCompletionDate(completedDays, totalDays) {
         if (completedDays <= 0) return 'Not started';
         const remaining = Math.max(totalDays - completedDays, 0);
@@ -69,6 +81,7 @@ class StorageManager {
         this.prefix = 'mlops-academy-';
         this.keys = {
             completedDays: this.prefix + 'completed-days',
+            completionDates: this.prefix + 'completion-dates',
             position: this.prefix + 'position',
             settings: this.prefix + 'settings',
             achievements: this.prefix + 'achievements',
@@ -100,6 +113,18 @@ class StorageManager {
         const raw = localStorage.getItem(this.keys.completedDays);
         const parsed = raw ? Utils.parseJSON(raw, []) : [];
         return Array.isArray(parsed) ? parsed : [];
+    }
+
+    saveCompletionDates(completionDates) {
+        if (!this.isAvailable()) return;
+        localStorage.setItem(this.keys.completionDates, JSON.stringify(completionDates || {}));
+    }
+
+    loadCompletionDates() {
+        if (!this.isAvailable()) return {};
+        const raw = localStorage.getItem(this.keys.completionDates);
+        const parsed = raw ? Utils.parseJSON(raw, {}) : {};
+        return parsed && typeof parsed === 'object' ? parsed : {};
     }
 
     savePosition(position) {
@@ -158,6 +183,7 @@ class StorageManager {
     exportData() {
         return {
             completedDays: this.loadCompletedDays(),
+            completionDates: this.loadCompletionDates(),
             position: this.loadPosition(),
             settings: this.loadSettings(),
             achievements: this.loadAchievements(),
@@ -170,6 +196,7 @@ class StorageManager {
         if (!data || typeof data !== 'object') return false;
         try {
             if (Array.isArray(data.completedDays)) this.saveCompletedDays(data.completedDays);
+            if (data.completionDates && typeof data.completionDates === 'object') this.saveCompletionDates(data.completionDates);
             if (data.position) this.savePosition(data.position);
             if (data.settings) this.saveSettings(data.settings);
             if (Array.isArray(data.achievements)) this.saveAchievements(data.achievements);
@@ -263,6 +290,7 @@ class StateManager {
     constructor(totalDays) {
         this.totalDays = totalDays;
         this.completedDays = [];
+        this.completionDates = {};
         this.settings = {
             studentName: '',
             targetRole: ''
@@ -283,10 +311,18 @@ class StateManager {
 
     initialize(storage, dataManager) {
         this.completedDays = this.normalizeCompletedDays(storage.loadCompletedDays(), dataManager.totalLearningDays);
+        this.completionDates = this.normalizeCompletionDates(storage.loadCompletionDates(), dataManager.totalLearningDays);
         this.settings = { ...this.settings, ...(storage.loadSettings() || {}) };
         this.achievedAchievements = storage.loadAchievements();
         this.streaks = storage.loadStreaks();
         this.totalDays = dataManager.totalLearningDays;
+
+        // Backfill missing dates for previously completed days.
+        this.completedDays.forEach((dayNumber) => {
+            if (!this.completionDates[dayNumber]) {
+                this.completionDates[dayNumber] = new Date().toISOString();
+            }
+        });
 
         const storedPos = storage.loadPosition();
         if (storedPos && typeof storedPos.dayNumber === 'number') {
@@ -302,6 +338,23 @@ class StateManager {
         if (!Array.isArray(days)) return [];
         const unique = [...new Set(days.filter((d) => Number.isInteger(d) && d >= 1 && d <= maxDays))];
         return unique.sort((a, b) => a - b);
+    }
+
+    normalizeCompletionDates(completionDates, maxDays) {
+        if (!completionDates || typeof completionDates !== 'object') return {};
+
+        const normalized = {};
+        Object.keys(completionDates).forEach((key) => {
+            const dayNumber = Number(key);
+            if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > maxDays) return;
+
+            const parsed = new Date(completionDates[key]);
+            if (!Number.isNaN(parsed.getTime())) {
+                normalized[dayNumber] = parsed.toISOString();
+            }
+        });
+
+        return normalized;
     }
 
     getNextUnlockedDay() {
@@ -325,6 +378,7 @@ class StateManager {
         if (this.completedDays.includes(dayNumber)) return false;
         this.completedDays.push(dayNumber);
         this.completedDays.sort((a, b) => a - b);
+        this.completionDates[dayNumber] = new Date().toISOString();
         this.updateStreaks();
         this.checkAchievements();
         return true;
@@ -334,9 +388,59 @@ class StateManager {
         if (!this.completedDays.includes(dayNumber)) return false;
 
         this.completedDays = this.completedDays.filter((d) => d < dayNumber);
+        Object.keys(this.completionDates).forEach((key) => {
+            if (Number(key) >= dayNumber) {
+                delete this.completionDates[key];
+            }
+        });
         this.updateStreaks();
         this.checkAchievements();
         return true;
+    }
+
+    getCompletionDate(dayNumber) {
+        return this.completionDates[dayNumber] || null;
+    }
+
+    getLatestCompletionDate() {
+        if (this.completedDays.length === 0) return null;
+
+        const latestDay = Math.max(...this.completedDays);
+        return this.getCompletionDate(latestDay);
+    }
+
+    getEstimatedCompletionDateLabel() {
+        const completed = this.getCompletedCount();
+        if (completed <= 0) return 'Not started';
+
+        if (completed >= this.totalDays) {
+            const latest = this.getLatestCompletionDate();
+            return latest ? `Completed on ${Utils.formatDate(latest)}` : 'Completed';
+        }
+
+        const sortedDays = [...this.completedDays].sort((a, b) => a - b);
+        const firstDay = sortedDays[0];
+        const latestDay = sortedDays[sortedDays.length - 1];
+
+        const firstDateRaw = this.getCompletionDate(firstDay) || new Date().toISOString();
+        const latestDateRaw = this.getCompletionDate(latestDay) || new Date().toISOString();
+
+        const firstDate = Utils.startOfDay(firstDateRaw);
+        const latestDate = Utils.startOfDay(latestDateRaw);
+        const today = Utils.startOfDay(new Date());
+        const paceBaseDate = latestDate > today ? latestDate : today;
+
+        let learningDaysPerCalendarDay = 1;
+        if (completed > 1) {
+            const elapsedDays = Math.max(1, Utils.daysBetween(firstDate, paceBaseDate) + 1);
+            learningDaysPerCalendarDay = Math.max(0.2, completed / elapsedDays);
+        }
+
+        const remaining = this.getRemainingCount();
+        const etaCalendarDays = Math.ceil(remaining / learningDaysPerCalendarDay);
+        const etaDate = new Date(paceBaseDate.getTime());
+        etaDate.setDate(etaDate.getDate() + etaCalendarDays);
+        return Utils.formatDate(etaDate);
     }
 
     updateCurrentPosition(dataManager) {
@@ -445,7 +549,15 @@ class DashboardManager {
 
         this.updateText('#dashboard-current-streak', `${this.state.streaks.current}`);
         this.updateText('#dashboard-longest-streak', `${this.state.streaks.longest}`);
-        this.updateText('#dashboard-completion-date', Utils.estimateCompletionDate(completed, this.state.totalDays));
+        this.updateText('#dashboard-completion-date', this.state.getEstimatedCompletionDateLabel());
+
+        const completionNote = Utils.getElement('#dashboard .completion-note');
+        if (completionNote) {
+            const latestDate = this.state.getLatestCompletionDate();
+            completionNote.textContent = latestDate
+                ? `Calendar synced. Last completed on ${Utils.formatDate(latestDate)}`
+                : 'Calendar synced. Mark Day 1 to start ETA updates';
+        }
     }
 
     updateText(selector, value) {
@@ -474,12 +586,17 @@ class RoadmapManager {
     render() {
         if (!this.container || !Array.isArray(this.dataManager.roadmap?.phases)) return;
 
+        const expandedKeys = this.captureExpandedKeys();
+        const activeSearch = this.searchInput?.value || '';
+
         const fragment = document.createDocumentFragment();
 
         this.dataManager.roadmap.phases.forEach((phase) => {
             const phaseEl = Utils.createElement('div', { className: 'accordion-module' });
 
             const phaseHeader = Utils.createElement('button', { className: 'accordion-header', type: 'button' });
+            const phaseKey = `phase-${phase.phaseNumber}`;
+            phaseHeader.dataset.nodeKey = phaseKey;
             const phaseDays = this.countPhaseDays(phase);
             phaseHeader.innerHTML = `
                 <span>Phase ${phase.phaseNumber}: ${phase.title}</span>
@@ -487,6 +604,7 @@ class RoadmapManager {
             `;
 
             const phaseContent = Utils.createElement('div', { className: 'accordion-content' });
+            phaseContent.dataset.nodeKey = phaseKey;
             const phaseInfo = Utils.createElement('div', { className: 'learning-day-time' });
             phaseInfo.textContent = `${phaseDays} learning days`;
             phaseContent.appendChild(phaseInfo);
@@ -509,6 +627,33 @@ class RoadmapManager {
 
         this.container.innerHTML = '';
         this.container.appendChild(fragment);
+        this.restoreExpandedKeys(expandedKeys);
+        if (activeSearch) {
+            this.handleSearch(activeSearch);
+        }
+    }
+
+    captureExpandedKeys() {
+        if (!this.container) return [];
+
+        const keys = new Set();
+        this.container.querySelectorAll('.active[data-node-key]').forEach((element) => {
+            if (element.dataset.nodeKey) {
+                keys.add(element.dataset.nodeKey);
+            }
+        });
+
+        return [...keys];
+    }
+
+    restoreExpandedKeys(keys) {
+        if (!this.container || !Array.isArray(keys) || keys.length === 0) return;
+
+        keys.forEach((key) => {
+            this.container.querySelectorAll(`[data-node-key="${key}"]`).forEach((element) => {
+                element.classList.add('active');
+            });
+        });
     }
 
     countPhaseDays(phase) {
@@ -520,12 +665,15 @@ class RoadmapManager {
     createWeekElement(week) {
         const weekEl = Utils.createElement('div', { className: 'accordion-week' });
         const weekHeader = Utils.createElement('button', { className: 'accordion-header', type: 'button' });
+        const weekKey = `week-${week.weekNumber}`;
+        weekHeader.dataset.nodeKey = weekKey;
         weekHeader.innerHTML = `
             <span>Week ${week.weekNumber}: ${week.title}</span>
             <span class="accordion-toggle">▼</span>
         `;
 
         const weekContent = Utils.createElement('div', { className: 'accordion-content' });
+        weekContent.dataset.nodeKey = weekKey;
         const moduleHint = Utils.createElement('div', { className: 'learning-day-time' });
         moduleHint.textContent = `Module ${week.moduleNumber}: ${week.moduleTitle}`;
         weekContent.appendChild(moduleHint);
@@ -547,12 +695,14 @@ class RoadmapManager {
     createLearningDayElement(day) {
         const isCompleted = this.state.isDayCompleted(day.dayNumber);
         const isLocked = this.state.isDayLocked(day.dayNumber);
+        const dayKey = `day-${day.dayNumber}`;
 
         const wrapper = Utils.createElement('div', { className: 'accordion-day' });
         const row = Utils.createElement('div', {
             className: `learning-day-item ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`,
             tabIndex: isLocked ? -1 : 0
         });
+        row.dataset.nodeKey = dayKey;
 
         const checkbox = Utils.createElement('input', {
             className: 'learning-day-checkbox',
@@ -581,13 +731,21 @@ class RoadmapManager {
         info.appendChild(time);
 
         const status = Utils.createElement('div', { className: 'learning-day-status' });
-        status.textContent = isLocked ? 'Locked' : (isCompleted ? 'Completed' : 'Not Started');
+        if (isLocked) {
+            status.textContent = 'Locked';
+        } else if (isCompleted) {
+            const completedOn = this.state.getCompletionDate(day.dayNumber);
+            status.textContent = completedOn ? `Completed ${Utils.formatDate(completedOn)}` : 'Completed';
+        } else {
+            status.textContent = 'Not Started';
+        }
 
         row.appendChild(checkbox);
         row.appendChild(info);
         row.appendChild(status);
 
         const details = Utils.createElement('div', { className: 'accordion-content' });
+        details.dataset.nodeKey = dayKey;
         details.innerHTML = this.buildDayDetails(day);
 
         row.addEventListener('click', (e) => {
@@ -812,8 +970,8 @@ class SettingsManager {
 
         const displayName = Utils.getElement('#student-name-display');
         const displayRole = Utils.getElement('#target-role-display');
-        if (displayName) displayName.textContent = studentName || 'Welcome';
-        if (displayRole) displayRole.textContent = targetRole || 'Senior Azure DevOps Engineer';
+        if (displayName) displayName.textContent = studentName || 'Welcome Saisuresh';
+        if (displayRole) displayRole.textContent = targetRole || 'Here is your course to become an MLOps Engineer';
     }
 
     handleProfileSubmit(e) {
@@ -879,6 +1037,7 @@ class App {
         this.storage = new StorageManager();
         this.dataManager = new DataManager();
         this.state = new StateManager(DEFAULT_TOTAL_LEARNING_DAYS);
+        this.notesKey = 'mlops-academy-notes';
 
         this.dashboardManager = null;
         this.roadmapManager = null;
@@ -899,6 +1058,8 @@ class App {
             this.achievementManager = new AchievementManager(this.state);
             this.statisticsManager = new StatisticsManager(this.state, this.dataManager);
             this.settingsManager = new SettingsManager(this.state, this.storage);
+
+            this.applyArchitectureLayout();
 
             this.registerNavigationEvents();
             this.registerUpdateEvents();
@@ -928,6 +1089,7 @@ class App {
         window.addEventListener('dayUpdated', () => {
             this.state.updateCurrentPosition(this.dataManager);
             this.renderAll();
+            this.renderExtendedSections();
             this.saveState();
         });
 
@@ -949,14 +1111,154 @@ class App {
         this.progressManager.render();
         this.achievementManager.render();
         this.statisticsManager.render();
+        this.renderExtendedSections();
     }
 
     saveState() {
         this.storage.saveCompletedDays(this.state.completedDays);
+        this.storage.saveCompletionDates(this.state.completionDates);
         this.storage.savePosition(this.state.currentPosition);
         this.storage.saveSettings(this.state.settings);
         this.storage.saveAchievements(this.state.achievedAchievements);
         this.storage.saveStreaks(this.state.streaks.current, this.state.streaks.longest);
+    }
+
+    applyArchitectureLayout() {
+        // Rename Roadmap section to Curriculum while keeping existing section id.
+        const roadmapButton = Utils.getElement('.nav-btn[data-section="roadmap"]');
+        if (roadmapButton) roadmapButton.textContent = 'Curriculum';
+
+        const roadmapTitle = Utils.getElement('#roadmap .section-header h2');
+        const roadmapDescription = Utils.getElement('#roadmap .section-description');
+        if (roadmapTitle) roadmapTitle.textContent = 'Curriculum';
+        if (roadmapDescription) roadmapDescription.textContent = 'Phase -> Week -> Day learning structure';
+
+        this.ensureExtraSection('notes', 'Notes', 'Capture daily learning reflections and blockers', `
+            <div class="settings-section">
+                <h3>Daily Notes</h3>
+                <textarea id="learning-notes-text" class="form-input" rows="10" placeholder="Write daily notes, blockers, and learnings..."></textarea>
+                <div style="margin-top: 1rem;">
+                    <button id="save-notes-btn" class="btn btn-primary" type="button">Save Notes</button>
+                </div>
+            </div>
+        `);
+
+        this.ensureExtraSection('resources', 'Resources', 'Reference map by phase and core domain', `
+            <div class="settings-section">
+                <h3>Phase Resource Index</h3>
+                <div id="resources-content" class="module-stats"></div>
+            </div>
+        `);
+
+        this.ensureExtraSection('github-portfolio', 'GitHub Portfolio', 'Track deliverables for your public engineering profile', `
+            <div class="settings-section">
+                <h3>Portfolio Tracks</h3>
+                <div id="portfolio-content" class="module-stats"></div>
+            </div>
+        `);
+
+        this.ensureExtraSection('capstone', 'Capstone', 'Enterprise capstone readiness and completion checklist', `
+            <div class="settings-section">
+                <h3>Capstone Status</h3>
+                <div id="capstone-content" class="module-stats"></div>
+            </div>
+        `);
+
+        this.registerNotesEvents();
+    }
+
+    ensureExtraSection(sectionId, title, description, bodyHtml) {
+        const navList = Utils.getElement('.nav-list');
+        const mainContent = Utils.getElement('.main-content');
+        const settingsSection = Utils.getElement('#settings');
+        const settingsNavButton = Utils.getElement('.nav-btn[data-section="settings"]');
+
+        if (!navList || !mainContent || !settingsSection || !settingsNavButton) return;
+
+        if (!Utils.getElement(`#${sectionId}`)) {
+            const section = Utils.createElement('section', { id: sectionId, className: 'section' });
+            section.innerHTML = `
+                <div class="section-header">
+                    <h2>${title}</h2>
+                    <p class="section-description">${description}</p>
+                </div>
+                <div class="settings-container">${bodyHtml}</div>
+            `;
+            mainContent.insertBefore(section, settingsSection);
+        }
+
+        if (!Utils.getElement(`.nav-btn[data-section="${sectionId}"]`)) {
+            const li = Utils.createElement('li');
+            const button = Utils.createElement('button', {
+                className: 'nav-btn',
+                type: 'button'
+            });
+            button.setAttribute('data-section', sectionId);
+            button.textContent = title;
+            li.appendChild(button);
+
+            const settingsLi = settingsNavButton.closest('li');
+            if (settingsLi) {
+                navList.insertBefore(li, settingsLi);
+            } else {
+                navList.appendChild(li);
+            }
+        }
+    }
+
+    registerNotesEvents() {
+        const notesText = Utils.getElement('#learning-notes-text');
+        const saveButton = Utils.getElement('#save-notes-btn');
+        if (!notesText || !saveButton) return;
+
+        notesText.value = localStorage.getItem(this.notesKey) || '';
+        saveButton.addEventListener('click', () => {
+            localStorage.setItem(this.notesKey, notesText.value || '');
+            Utils.alert('Notes saved.');
+        });
+    }
+
+    renderExtendedSections() {
+        this.renderResources();
+        this.renderPortfolio();
+        this.renderCapstone();
+    }
+
+    renderResources() {
+        const container = Utils.getElement('#resources-content');
+        if (!container) return;
+
+        const rows = (this.dataManager.roadmap?.phases || []).map((phase) => {
+            const weekCount = (phase.modules || []).reduce((sum, module) => sum + (module.weeks || []).length, 0);
+            return `<div class="module-stat-item"><span class="module-stat-name">Phase ${phase.phaseNumber}: ${phase.title}</span><span class="module-stat-value">${weekCount} weeks</span></div>`;
+        });
+
+        container.innerHTML = rows.join('');
+    }
+
+    renderPortfolio() {
+        const container = Utils.getElement('#portfolio-content');
+        if (!container) return;
+
+        const tracks = this.dataManager.roadmap?.academy?.portfolioTracks || [];
+        container.innerHTML = tracks.map((track) => `<div class="module-stat-item"><span class="module-stat-name">${track}</span><span class="module-stat-value">Track</span></div>`).join('');
+    }
+
+    renderCapstone() {
+        const container = Utils.getElement('#capstone-content');
+        if (!container) return;
+
+        const completed = this.state.getCompletedCount();
+        const progress = this.state.getProgressPercent();
+        const capstoneStart = 171;
+        const capstoneComplete = this.state.completedDays.filter((d) => d >= capstoneStart).length;
+
+        container.innerHTML = `
+            <div class="module-stat-item"><span class="module-stat-name">Overall Completion</span><span class="module-stat-value">${completed}/${this.state.totalDays}</span></div>
+            <div class="module-stat-item"><span class="module-stat-name">Overall Progress</span><span class="module-stat-value">${progress}%</span></div>
+            <div class="module-stat-item"><span class="module-stat-name">Enterprise Platform Days</span><span class="module-stat-value">${capstoneComplete}/30</span></div>
+            <div class="module-stat-item"><span class="module-stat-name">Capstone Focus</span><span class="module-stat-value">Phase 15-16</span></div>
+        `;
     }
 }
 

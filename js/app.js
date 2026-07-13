@@ -827,6 +827,11 @@ class ProgressManager {
     constructor(state, dataManager) {
         this.state = state;
         this.dataManager = dataManager;
+
+        this.resizeHandler = () => {
+            this.renderProgressChart();
+        };
+        window.addEventListener('resize', this.resizeHandler);
     }
 
     render() {
@@ -838,6 +843,128 @@ class ProgressManager {
         this.updateText('#progress-current-module', this.state.currentPosition.moduleTitle || 'Not started');
         this.updateText('#progress-current-week', `Week ${this.state.currentPosition.weekNumber}`);
         this.updateText('#progress-current-day', `Day ${this.state.currentPosition.dayNumber} of ${this.state.totalDays}`);
+
+        this.renderProgressChart();
+    }
+
+    renderProgressChart() {
+        const canvas = Utils.getElement('#progress-chart');
+        if (!canvas) return;
+
+        const context = canvas.getContext('2d');
+        if (!context) return;
+
+        const parentWidth = canvas.parentElement?.clientWidth || 0;
+        const cssWidth = Math.max(320, parentWidth ? Math.floor(parentWidth - 4) : 780);
+        const cssHeight = 220;
+        const dpr = window.devicePixelRatio || 1;
+
+        canvas.style.width = `${cssWidth}px`;
+        canvas.style.height = `${cssHeight}px`;
+        canvas.width = Math.floor(cssWidth * dpr);
+        canvas.height = Math.floor(cssHeight * dpr);
+
+        context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        context.clearRect(0, 0, cssWidth, cssHeight);
+
+        const padding = { top: 18, right: 16, bottom: 28, left: 36 };
+        const chartWidth = cssWidth - padding.left - padding.right;
+        const chartHeight = cssHeight - padding.top - padding.bottom;
+        if (chartWidth <= 0 || chartHeight <= 0) return;
+
+        context.strokeStyle = '#d6e1fb';
+        context.lineWidth = 1;
+
+        [0, 25, 50, 75, 100].forEach((value) => {
+            const y = padding.top + chartHeight - (value / 100) * chartHeight;
+            context.beginPath();
+            context.moveTo(padding.left, y);
+            context.lineTo(padding.left + chartWidth, y);
+            context.stroke();
+        });
+
+        const values = this.buildProgressSeries();
+        if (values.length === 0) return;
+
+        const gradient = context.createLinearGradient(padding.left, 0, padding.left + chartWidth, 0);
+        gradient.addColorStop(0, '#0f6fff');
+        gradient.addColorStop(1, '#00b894');
+
+        context.beginPath();
+        values.forEach((value, index) => {
+            const x = padding.left + (index / (values.length - 1 || 1)) * chartWidth;
+            const y = padding.top + chartHeight - (value / 100) * chartHeight;
+            if (index === 0) {
+                context.moveTo(x, y);
+            } else {
+                context.lineTo(x, y);
+            }
+        });
+        context.strokeStyle = gradient;
+        context.lineWidth = 3;
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        context.stroke();
+
+        context.beginPath();
+        values.forEach((value, index) => {
+            const x = padding.left + (index / (values.length - 1 || 1)) * chartWidth;
+            const y = padding.top + chartHeight - (value / 100) * chartHeight;
+            if (index === 0) {
+                context.moveTo(x, y);
+            } else {
+                context.lineTo(x, y);
+            }
+        });
+        context.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+        context.lineTo(padding.left, padding.top + chartHeight);
+        context.closePath();
+
+        const fillGradient = context.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
+        fillGradient.addColorStop(0, 'rgba(15, 111, 255, 0.22)');
+        fillGradient.addColorStop(1, 'rgba(15, 111, 255, 0.02)');
+        context.fillStyle = fillGradient;
+        context.fill();
+
+        const currentProgress = this.state.getProgressPercent();
+        const markerX = padding.left + chartWidth;
+        const markerY = padding.top + chartHeight - (currentProgress / 100) * chartHeight;
+
+        context.beginPath();
+        context.arc(markerX, markerY, 5, 0, Math.PI * 2);
+        context.fillStyle = '#0f6fff';
+        context.fill();
+
+        context.fillStyle = '#1e3e87';
+        context.font = '600 12px "Sora", "Segoe UI", sans-serif';
+        context.fillText(`${currentProgress}%`, markerX - 34, Math.max(14, markerY - 10));
+    }
+
+    buildProgressSeries() {
+        const total = Math.max(1, this.state.totalDays || 200);
+        const completedSet = new Set(this.state.completedDays || []);
+        const cumulativePercentages = [];
+        let completed = 0;
+
+        for (let day = 1; day <= total; day += 1) {
+            if (completedSet.has(day)) completed += 1;
+            cumulativePercentages.push((completed / total) * 100);
+        }
+
+        const maxPoints = 48;
+        const step = Math.max(1, Math.ceil(cumulativePercentages.length / maxPoints));
+        const sampled = [];
+
+        for (let i = 0; i < cumulativePercentages.length; i += step) {
+            sampled.push(cumulativePercentages[i]);
+        }
+
+        const finalValue = cumulativePercentages[cumulativePercentages.length - 1];
+        if (sampled[sampled.length - 1] !== finalValue) {
+            sampled.push(finalValue);
+        }
+
+        return sampled;
     }
 
     updateText(selector, value) {
@@ -1103,6 +1230,10 @@ class App {
         Utils.getElements('.section').forEach((section) => section.classList.remove('active'));
         const active = Utils.getElement(`#${sectionName}`);
         if (active) active.classList.add('active');
+
+        if (sectionName === 'progress' && this.progressManager) {
+            this.progressManager.render();
+        }
     }
 
     renderAll() {
